@@ -28,7 +28,7 @@ generate_meta() {
   "version": "$VERSION",
   "imagePath": "/var/lib/jellyfin/plugins/${PLUGIN_NAME}_$VERSION/${PLUGIN_NAME}.png",
   "status": "Active",
-  "autoUpdate": false,
+  "autoUpdate": true,
   "assemblies": [
     "$DLL_NAME"
   ]
