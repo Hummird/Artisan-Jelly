@@ -3,6 +3,9 @@
 A Jellyfin plugin designed for advanced image scanning, library analysis, and metadata management.
 
 Artisan Jelly exposes a fully functional REST API, allowing you to trigger library scans, filter missing images (like logos or backdrops), and fetch detailed statistics directly from the command line or external scripts.
+An Jellyfin toolkit designed to audit your media library,  
+uncover missing artwork, and easily edit items' images  
+through a powerful, integrated dashboard.
 
 ## Installation
 

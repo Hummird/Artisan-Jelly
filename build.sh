@@ -32,7 +32,7 @@ generate_meta() {
 {
   "category": "Metadata",
   "changelog": "Initial release.",
-  "description": "Scans your library for missing artwork",
+  "description": "Scans your library for missing artwork and lets you fix it from one place.",
   "guid": "$GUID",
   "name": "Artisan Jelly",
   "overview": "Finds movies and shows with incomplete images — missing posters, logos, backdrops, discs, and more.",
