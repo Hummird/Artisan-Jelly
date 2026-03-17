@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-PLUGIN_NAME="ArtisanJelly"
+PLUGIN_NAME="Artisan Jelly"
 DLL_NAME="Jellyfin.Plugin.ArtisanJelly.dll"
 BUILD_OUTPUT="bin/publish"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GUID="800aa8b6-9226-4069-a99a-4cdfafcdf394"
-VERSION="1.1.0.1"
+VERSION="1.1.0.2"
 TARGET_ABI="10.11.6.0"
 
 # ── Generate meta.json ───────────────────────────────────────────────
@@ -17,10 +17,10 @@ generate_meta() {
   cat >"$SCRIPT_DIR/meta.json" <<EOF
 {
   "category": "General",
-  "changelog": "Added a logo",
+  "changelog": "Fixed issue with logo and configPage not showing if installed from manifest",
   "description": "Scans your library for missing artwork and lets you fix it from one place.",
   "guid": "$GUID",
-  "name": "Artisan Jelly",
+  "name": "$PLUGIN_NAME",
   "overview": "Finds movies and shows with incomplete images — missing posters, logos, backdrops, discs, and more.",
   "owner": "hummird",
   "targetAbi": "$TARGET_ABI",
