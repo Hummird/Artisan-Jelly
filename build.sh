@@ -9,20 +9,6 @@ GUID="800aa8b6-9226-4069-a99a-4cdfafcdf394"
 VERSION="1.0.0.0"
 TARGET_ABI="10.11.6.0"
 
-# ── Typical Jellyfin plugin locations ───────────────────────────────
-CANDIDATE_DIRS=(
-  "/var/lib/jellyfin/plugins"
-  "/usr/lib/jellyfin/plugins"
-  "/opt/jellyfin/plugins"
-  "$HOME/.local/share/jellyfin/plugins"
-  "$HOME/.jellyfin/plugins"
-  "/config/plugins"
-  "/data/plugins"
-  "/jellyfin/plugins"
-  "/mnt/user/appdata/jellyfin/plugins"
-  "/volume1/@appstore/jellyfin/var/plugins"
-)
-
 # ── Generate meta.json ───────────────────────────────────────────────
 generate_meta() {
   local timestamp
@@ -63,57 +49,11 @@ build() {
   echo "==> Build complete: $BUILD_OUTPUT/$DLL_NAME"
 }
 
-# ── Find installed Jellyfin plugin roots ─────────────────────────────
-find_jellyfin_dirs() {
-  local found=()
-  for dir in "${CANDIDATE_DIRS[@]}"; do
-    if [ -d "$dir" ]; then
-      found+=("$dir")
-    fi
-  done
-  echo "${found[@]}"
-}
-
 # ── Install ──────────────────────────────────────────────────────────
 install_plugin() {
   local dll="$BUILD_OUTPUT/$DLL_NAME"
 
-  if [ ! -f "$dll" ]; then
-    echo "ERROR: $dll not found. Run ./build.sh first." >&2
-    exit 1
-  fi
-
-  local found_dirs
-  read -ra found_dirs <<<"$(find_jellyfin_dirs)"
-
-  if [ ${#found_dirs[@]} -eq 0 ]; then
-    echo ""
-    echo "!!! No Jellyfin plugin directories found automatically."
-    echo "    Locate your Jellyfin plugins folder and run:"
-    echo ""
-    echo "    mkdir -p /YOUR/JELLYFIN/plugins/$PLUGIN_NAME"
-    echo "    cp $dll /YOUR/JELLYFIN/plugins/$PLUGIN_NAME/"
-    echo "    cp $SCRIPT_DIR/meta.json /YOUR/JELLYFIN/plugins/$PLUGIN_NAME/"
-    echo "    chown -R jellyfin:jellyfin /YOUR/JELLYFIN/plugins/$PLUGIN_NAME"
-    echo ""
-    exit 0
-  fi
-
-  local target_dir
-  if [ ${#found_dirs[@]} -eq 1 ]; then
-    target_dir="${found_dirs[0]}"
-  else
-    echo "Multiple Jellyfin plugin directories found:"
-    for i in "${!found_dirs[@]}"; do
-      echo "  [$((i + 1))] ${found_dirs[$i]}"
-    done
-    printf "Pick one [1]: "
-    read -r choice
-    choice="${choice:-1}"
-    target_dir="${found_dirs[$((choice - 1))]}"
-  fi
-
-  local plugin_dir="$target_dir/$PLUGIN_NAME"
+  local plugin_dir="/var/lib/jellyfin/plugins/${PLUGIN_NAME}_$VERSION"
 
   if [ ! -d "$plugin_dir" ]; then
     echo "==> First run: creating $plugin_dir"
