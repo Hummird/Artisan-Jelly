@@ -8,7 +8,7 @@ using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.ArtisanJelly
 {
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
+    public class Plugin : BasePlugin<PluginConfiguration>
     {
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
             : base(applicationPaths, xmlSerializer)
