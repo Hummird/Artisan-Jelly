@@ -24,5 +24,16 @@ namespace Jellyfin.Plugin.ArtisanJelly
 
         public override string Description => "Scans your library for missing artwork.";
 
+        public IEnumerable<PluginPageInfo> GetPages()
+        {
+            return new[]
+            {
+                new PluginPageInfo
+                {
+                    Name = Name,
+                    EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.configPage.html",
+                },
+            };
+        }
     }
 }
