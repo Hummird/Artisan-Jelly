@@ -685,6 +685,796 @@
         </div>
       </div>
 
+      <script>
+        (function () {
+          var ALL_TYPES = [
+            "Primary",
+            "Logo",
+            "Backdrop",
+            "Banner",
+            "Thumb",
+            "Clearart",
+            "Disc",
+            "BoxRear",
+          ];
+          var STOR_KEY = "aj_hidden_v1";
+          var page = document.getElementById("ArtisanJellyPage");
+          var currentPage = 1;
+          var currentCriteria = {};
+
+          // Modal state
+          var modalItemId = null;
+          var modalItemName = null;
+          var modalImages = {}; // ImageType → {Width,Height,...}
+          var searchType = null;
+          var searchItemId = null;
+
+          // ── Helpers ──────────────────────────────────────────────────────
+
+          function apiUrl(p) {
+            return ApiClient.getUrl("Plugins/ArtisanJelly/" + p);
+          }
+          function setStatus(m) {
+            document.getElementById("divScanStatus").textContent = m;
+          }
+          function escHtml(s) {
+            return String(s || "")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+          }
+          function getHidden() {
+            try {
+              return JSON.parse(localStorage.getItem(STOR_KEY) || "[]");
+            } catch (e) {
+              return [];
+            }
+          }
+          function setHidden(a) {
+            localStorage.setItem(STOR_KEY, JSON.stringify(a));
+          }
+          function getVisible() {
+            var h = getHidden();
+            return ALL_TYPES.filter(function (t) {
+              return h.indexOf(t) === -1;
+            });
+          }
+
+          // ── Build checkboxes via innerHTML so `is=` attribute is parsed correctly ──
+
+          function makeCheckbox(type, extraClass, checked) {
+            var d = document.createElement("div");
+            d.innerHTML =
+              '<label class="checkboxContainer">' +
+              '<input is="emby-checkbox" type="checkbox" class="' +
+              (extraClass || "") +
+              '" value="' +
+              type +
+              '"' +
+              (checked ? " checked" : "") +
+              " />" +
+              "<span>" +
+              escHtml(type) +
+              "</span>" +
+              "</label>";
+            return d.firstChild; // the <label>
+          }
+
+          function buildIgnoredGroup() {
+            var hidden = getHidden();
+            var c = document.getElementById("grpIgnored");
+            c.innerHTML = "";
+            ALL_TYPES.forEach(function (type) {
+              var lbl = makeCheckbox(
+                type,
+                "chkIgnored",
+                hidden.indexOf(type) !== -1,
+              );
+              lbl
+                .querySelector("input")
+                .addEventListener("change", function (e) {
+                  var cur = getHidden();
+                  if (e.target.checked) {
+                    if (cur.indexOf(type) === -1) cur.push(type);
+                  } else {
+                    cur = cur.filter(function (x) {
+                      return x !== type;
+                    });
+                  }
+                  setHidden(cur);
+                  buildMissingGroup();
+                });
+              c.appendChild(lbl);
+            });
+          }
+
+          function buildMissingGroup() {
+            var visible = getVisible().filter(function (t) {
+              return t !== "Backdrop";
+            });
+            var c = document.getElementById("grpMissing");
+            c.innerHTML = "";
+            visible.forEach(function (type) {
+              c.appendChild(makeCheckbox(type, "chkMissing", false));
+            });
+          }
+
+          function buildCriteria() {
+            var missing = [];
+            page.querySelectorAll(".chkMissing:checked").forEach(function (cb) {
+              missing.push(cb.value);
+            });
+            var bd = document.getElementById("numBackdrops").value;
+            return {
+              titleFilter: document
+                .getElementById("txtTitleFilter")
+                .value.trim(),
+              itemType: document.getElementById("selectItemType").value,
+              missingImages: missing,
+              maxBackdrops:
+                bd !== "" ? Math.max(0, parseInt(bd, 10) - 1) : null,
+            };
+          }
+
+          function thumbUrl(id) {
+            return ApiClient.getUrl("Items/" + id + "/Images/Primary", {
+              maxWidth: 42,
+              maxHeight: 63,
+              quality: 90,
+            });
+          }
+
+          // ── Results ───────────────────────────────────────────────────────
+
+          function renderResults(data) {
+            var list = document.getElementById("divResultsList");
+            var pager = document.getElementById("divPager");
+            var section = document.getElementById("divResults");
+            var hidden = getHidden();
+
+            document.getElementById("spanResultCount").textContent =
+              "(" + data.TotalCount + " items)";
+            section.style.display = "";
+            list.innerHTML = "";
+
+            if (!data.Items || !data.Items.length) {
+              list.innerHTML =
+                '<p style="opacity:0.45;font-size:0.9em;">No items match your filters.</p>';
+              pager.innerHTML = "";
+              return;
+            }
+
+            data.Items.forEach(function (item) {
+              var missing = [];
+              var imgs = item.SingularImages || {};
+              Object.keys(imgs).forEach(function (k) {
+                if (!imgs[k] && hidden.indexOf(k) === -1) missing.push(k);
+              });
+              if (hidden.indexOf("Backdrop") === -1 && item.BackdropCount === 0)
+                missing.push("Backdrop");
+
+              var pillsHtml = missing.length
+                ? missing
+                    .map(function (m) {
+                      return '<span class="aj-pill">' + m + "</span>";
+                    })
+                    .join("")
+                : '<span class="aj-ok"><span class="material-icons check" style="font-size:inherit;vertical-align:middle;"></span> Complete</span>';
+
+              var row = document.createElement("div");
+              row.className = "aj-row";
+
+              // Thumbnail
+              var tw = document.createElement("div");
+              if (imgs["Primary"]) {
+                var img = document.createElement("img");
+                img.className = "aj-thumb";
+                img.alt = "";
+                img.src = thumbUrl(item.ItemId);
+                img.onerror = function () {
+                  var ph = document.createElement("div");
+                  ph.className = "aj-thumb-ph";
+                  ph.innerHTML = '<span class="material-icons movie"></span>';
+                  tw.replaceChild(ph, img);
+                };
+                tw.appendChild(img);
+              } else {
+                var ph = document.createElement("div");
+                ph.className = "aj-thumb-ph";
+                ph.innerHTML = '<span class="material-icons movie"></span>';
+                tw.appendChild(ph);
+              }
+              row.appendChild(tw);
+
+              // Info
+              var info = document.createElement("div");
+              info.className = "aj-info";
+              info.innerHTML =
+                '<div class="aj-title">' +
+                escHtml(item.ItemName) +
+                "</div>" +
+                '<div class="aj-type">' +
+                escHtml(item.ItemType) +
+                "</div>" +
+                '<div class="aj-pills">' +
+                pillsHtml +
+                "</div>";
+              row.appendChild(info);
+
+              // Edit button
+              var btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "aj-edit-btn";
+              btn.textContent = "Edit Images";
+              btn.addEventListener("click", function () {
+                openEditModal(item.ItemId, item.ItemName);
+              });
+              row.appendChild(btn);
+
+              list.appendChild(row);
+            });
+
+            pager.innerHTML = "";
+            var totalPages = Math.ceil(data.TotalCount / 50);
+            if (totalPages > 1) {
+              for (var p = 1; p <= totalPages; p++) {
+                (function (pg) {
+                  var btn = document.createElement("button");
+                  btn.setAttribute("is", "emby-button");
+                  btn.type = "button";
+                  btn.className =
+                    "emby-button" + (pg === currentPage ? " raised" : "");
+                  btn.textContent = pg;
+                  btn.addEventListener("click", function () {
+                    currentPage = pg;
+                    loadFilter(currentCriteria, pg);
+                  });
+                  pager.appendChild(btn);
+                })(p);
+              }
+            }
+          }
+
+          // ── Edit Images Modal ──────────────────────────────────────────────
+
+          var SINGULAR_TYPES = [
+            "Primary",
+            "Logo",
+            "Art",
+            "Banner",
+            "Thumb",
+            "Disc",
+            "BoxRear",
+          ];
+          var LANDSCAPE_TYPES = ["Banner", "Thumb", "Art"];
+
+          function isLandscape(type) {
+            return LANDSCAPE_TYPES.indexOf(type) !== -1;
+          }
+
+          function openEditModal(itemId, itemName) {
+            modalItemId = itemId;
+            modalItemName = itemName;
+            modalImages = {};
+            document.getElementById("modalTitle").textContent = itemName;
+            document.getElementById("modalBody").innerHTML =
+              '<p style="opacity:0.5;font-size:0.85em;">Loading…</p>';
+            document.getElementById("ajModalOverlay").classList.add("open");
+            document.body.style.overflow = "hidden";
+
+            ApiClient.ajax({
+              type: "GET",
+              url: ApiClient.getUrl("Items/" + itemId + "/Images"),
+              dataType: "json",
+            })
+              .then(function (images) {
+                images.forEach(function (img) {
+                  var key = img.ImageType;
+                  if (!modalImages[key]) modalImages[key] = [];
+                  modalImages[key].push(img);
+                });
+                renderEditModal();
+              })
+              .catch(function () {
+                renderEditModal();
+              });
+          }
+
+          function renderEditModal() {
+            var body = document.getElementById("modalBody");
+            body.innerHTML = "";
+
+            // Section: singular images
+            var singSection = document.createElement("div");
+            singSection.innerHTML =
+              '<h2 class="sectionTitle" style="margin:0 0 0.8em;">Images</h2>';
+            var singGrid = document.createElement("div");
+            singGrid.className = "aj-img-grid";
+
+            SINGULAR_TYPES.forEach(function (type) {
+              var landscape = isLandscape(type);
+              var imgs = modalImages[type] || [];
+              if (imgs.length > 0) {
+                imgs.forEach(function (imgInfo) {
+                  singGrid.appendChild(makeImageCard(imgInfo, type, landscape));
+                });
+              } else {
+                singGrid.appendChild(makeAddCard(type, landscape));
+              }
+            });
+            singSection.appendChild(singGrid);
+            body.appendChild(singSection);
+
+            // Section: backdrops
+            var bdSection = document.createElement("div");
+            bdSection.innerHTML =
+              '<h2 class="sectionTitle" style="margin:0.5em 0 0.8em;">Backdrops</h2>';
+            var bdGrid = document.createElement("div");
+            bdGrid.className = "aj-img-grid";
+
+            var backdrops = modalImages["Backdrop"] || [];
+            backdrops.forEach(function (imgInfo) {
+              bdGrid.appendChild(makeImageCard(imgInfo, "Backdrop", true));
+            });
+            bdGrid.appendChild(makeAddCard("Backdrop", true));
+            bdSection.appendChild(bdGrid);
+            body.appendChild(bdSection);
+          }
+
+          function makeImageCard(imgInfo, type, landscape) {
+            var card = document.createElement("div");
+            card.className =
+              "aj-img-card " + (landscape ? "landscape" : "portrait");
+            if (type === "Backdrop") card.style.width = "180px";
+
+            var imgPath =
+              imgInfo.ImageIndex != null
+                ? type + "/" + imgInfo.ImageIndex
+                : type;
+            var imgUrl = ApiClient.getUrl(
+              "Items/" + modalItemId + "/Images/" + imgPath,
+              {
+                maxWidth: landscape ? 280 : 160,
+                quality: 90,
+              },
+            );
+
+            var img = document.createElement("img");
+            img.src = imgUrl;
+            img.alt = "";
+
+            var info = document.createElement("div");
+            info.className = "aj-card-info";
+            info.textContent =
+              type +
+              (imgInfo.Width
+                ? " · " + imgInfo.Width + "×" + imgInfo.Height
+                : "");
+
+            var actions = document.createElement("div");
+            actions.className = "aj-card-actions";
+
+            var searchBtn = document.createElement("button");
+            searchBtn.type = "button";
+            searchBtn.className = "aj-card-btn";
+            searchBtn.title = "Search online";
+            searchBtn.innerHTML = '<span class="material-icons search"></span>';
+            searchBtn.addEventListener("click", function () {
+              openSearchModal(type, false);
+            });
+
+            var uploadBtn = document.createElement("button");
+            uploadBtn.type = "button";
+            uploadBtn.className = "aj-card-btn";
+            uploadBtn.title = "Upload file";
+            uploadBtn.innerHTML =
+              '<span class="material-icons file_upload"></span>';
+            uploadBtn.addEventListener("click", function () {
+              triggerUpload(type);
+            });
+
+            var delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "aj-card-btn";
+            delBtn.title = "Delete";
+            delBtn.innerHTML = '<span class="material-icons delete"></span>';
+            delBtn.addEventListener("click", function () {
+              deleteImage(type, imgInfo.ImageIndex);
+            });
+
+            actions.appendChild(searchBtn);
+            actions.appendChild(uploadBtn);
+            actions.appendChild(delBtn);
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(actions);
+            return card;
+          }
+
+          function makeAddCard(type, landscape) {
+            var card = document.createElement("div");
+            card.className =
+              "aj-add-card " + (landscape ? "landscape" : "portrait");
+            if (type === "Backdrop") card.style.width = "180px";
+            card.innerHTML =
+              '<div class="aj-add-card-icon"><span class="material-icons add"></span></div><div>' +
+              type +
+              "</div>";
+
+            card.addEventListener("click", function () {
+              openSearchModal(type, true);
+            });
+            return card;
+          }
+
+          function closeEditModal() {
+            document.getElementById("ajModalOverlay").classList.remove("open");
+            document.body.style.overflow = "";
+          }
+
+          // ── Search / Upload sub-modal ─────────────────────────────────────
+
+          function openSearchModal(type, includeUpload) {
+            searchType = type;
+            searchItemId = modalItemId;
+            document.getElementById("searchTitle").textContent =
+              "Search — " + type;
+            document.getElementById("ajSearchGrid").innerHTML = "";
+            document.getElementById("searchStatus").textContent = "Searching…";
+            document.getElementById("uploadHint").textContent = "";
+
+            var landscape = isLandscape(type) || type === "Backdrop";
+            document.getElementById("ajSearchGrid").className =
+              "aj-search-grid" + (landscape ? " landscape" : "");
+
+            document.getElementById("ajSearchOverlay").classList.add("open");
+
+            doImageSearch(type, landscape);
+          }
+
+          function doImageSearch(type, landscape) {
+            ApiClient.ajax({
+              type: "GET",
+              url: ApiClient.getUrl("Items/" + searchItemId + "/RemoteImages", {
+                type: type,
+                limit: 60,
+                includeAllLanguages: true,
+              }),
+              dataType: "json",
+            })
+              .then(function (data) {
+                var images = data.Images || [];
+                var grid = document.getElementById("ajSearchGrid");
+                grid.innerHTML = "";
+                document.getElementById("searchStatus").textContent =
+                  images.length ? "" : "No results found.";
+
+                images.forEach(function (img) {
+                  var cell = document.createElement("div");
+                  cell.className =
+                    "aj-search-item " + (landscape ? "landscape" : "portrait");
+                  var el = document.createElement("img");
+                  el.src = img.ThumbnailUrl || img.Url;
+                  el.alt = "";
+                  el.loading = "lazy";
+                  el.onerror = function () {
+                    cell.style.display = "none";
+                  };
+                  var info = document.createElement("div");
+                  info.className = "aj-si-info";
+                  info.textContent =
+                    (img.Width || "?") +
+                    "×" +
+                    (img.Height || "?") +
+                    (img.ProviderName ? " · " + img.ProviderName : "");
+                  cell.appendChild(el);
+                  cell.appendChild(info);
+                  cell.addEventListener("click", function () {
+                    applyRemoteImage(img.Url, type);
+                  });
+                  grid.appendChild(cell);
+                });
+              })
+              .catch(function () {
+                document.getElementById("searchStatus").textContent =
+                  "Search failed.";
+              });
+          }
+
+          function closeSearchModal() {
+            document.getElementById("ajSearchOverlay").classList.remove("open");
+          }
+
+          function applyRemoteImage(url, type) {
+            document.getElementById("searchStatus").textContent = "Applying…";
+            ApiClient.ajax({
+              type: "POST",
+              url: ApiClient.getUrl(
+                "Items/" + searchItemId + "/RemoteImages/Download",
+                {
+                  type: type,
+                  imageUrl: url,
+                },
+              ),
+            })
+              .then(function () {
+                document.getElementById("searchStatus").innerHTML =
+                  '<span class="material-icons check" style="vertical-align: middle;"></span> Applied!';
+                setTimeout(function () {
+                  closeSearchModal();
+                  modalImages = {};
+                  ApiClient.ajax({
+                    type: "GET",
+                    url: ApiClient.getUrl("Items/" + modalItemId + "/Images"),
+                    dataType: "json",
+                  }).then(function (images) {
+                    images.forEach(function (img) {
+                      if (!modalImages[img.ImageType])
+                        modalImages[img.ImageType] = [];
+                      modalImages[img.ImageType].push(img);
+                    });
+                    renderEditModal();
+                  });
+                }, 800);
+              })
+              .catch(function (err) {
+                document.getElementById("searchStatus").textContent =
+                  "Failed: " +
+                  (err.status || err.statusText || "unknown error");
+              });
+          }
+
+          // ── Upload file ───────────────────────────────────────────────────
+
+          var uploadTargetType = null;
+
+          function triggerUpload(type) {
+            uploadTargetType = type;
+            var input = document.getElementById("fileUpload");
+            input.value = "";
+            input.click();
+          }
+
+          document
+            .getElementById("fileUpload")
+            .addEventListener("change", function (e) {
+              var file = e.target.files[0];
+              var typeToUse = uploadTargetType || searchType;
+
+              if (!file || !typeToUse) return;
+
+              var hint = document.getElementById("uploadHint");
+              if (!hint) hint = { textContent: "" };
+
+              hint.textContent = "Uploading " + typeToUse + "...";
+
+              var reader = new FileReader();
+
+              reader.onload = function (ev) {
+                // Get the base64 string and strip the "data:image/jpeg;base64," prefix
+                var base64String = ev.target.result.split(",")[1];
+
+                var mimeType = file.type || "image/jpeg";
+                if (mimeType === "image/*") mimeType = "image/jpeg";
+
+                ApiClient.ajax({
+                  type: "POST",
+                  url: ApiClient.getUrl(
+                    "Items/" + modalItemId + "/Images/" + typeToUse,
+                  ),
+                  data: base64String,
+                  contentType: mimeType,
+                  processData: false,
+                })
+                  .then(function () {
+                    hint.textContent = "✓ Uploaded!";
+                    uploadTargetType = null;
+
+                    setTimeout(function () {
+                      var searchOverlay =
+                        document.getElementById("iscanSearchOverlay");
+                      if (searchOverlay) searchOverlay.classList.remove("open");
+
+                      modalImages = {};
+                      ApiClient.ajax({
+                        type: "GET",
+                        url: ApiClient.getUrl(
+                          "Items/" + modalItemId + "/Images",
+                        ),
+                        dataType: "json",
+                      }).then(function (images) {
+                        images.forEach(function (img) {
+                          if (!modalImages[img.ImageType])
+                            modalImages[img.ImageType] = [];
+                          modalImages[img.ImageType].push(img);
+                        });
+                        renderEditModal();
+                      });
+                    }, 800);
+                  })
+                  .catch(function (err) {
+                    hint.textContent =
+                      "Upload failed: " +
+                      (err.status || err.statusText || "error");
+                    uploadTargetType = null;
+                  });
+              };
+
+              reader.onerror = function () {
+                hint.textContent = "Failed to read file locally.";
+                uploadTargetType = null;
+              };
+
+              reader.readAsDataURL(file);
+            });
+
+          function deleteImage(type, index) {
+            if (!confirm("Delete this " + type + " image?")) return;
+
+            var url =
+              index != null
+                ? ApiClient.getUrl(
+                    "Items/" + modalItemId + "/Images/" + type + "/" + index,
+                  )
+                : ApiClient.getUrl("Items/" + modalItemId + "/Images/" + type);
+
+            ApiClient.ajax({ type: "DELETE", url: url })
+              .then(function () {
+                // Re-fetch images from server to ensure indices are perfectly in sync
+                modalImages = {};
+                ApiClient.ajax({
+                  type: "GET",
+                  url: ApiClient.getUrl("Items/" + modalItemId + "/Images"),
+                  dataType: "json",
+                }).then(function (images) {
+                  images.forEach(function (img) {
+                    if (!modalImages[img.ImageType])
+                      modalImages[img.ImageType] = [];
+                    modalImages[img.ImageType].push(img);
+                  });
+                  renderEditModal();
+                });
+              })
+              .catch(function (err) {
+                Dashboard.alert({ message: "Delete failed." });
+              });
+          }
+
+          // ── Modal close events ────────────────────────────────────────────
+
+          document
+            .getElementById("btnModalClose")
+            .addEventListener("click", closeEditModal);
+          document
+            .getElementById("btnSearchClose")
+            .addEventListener("click", closeSearchModal);
+          document
+            .getElementById("ajModalOverlay")
+            .addEventListener("click", function (e) {
+              if (e.target === this) closeEditModal();
+            });
+          document
+            .getElementById("ajSearchOverlay")
+            .addEventListener("click", function (e) {
+              if (e.target === this) closeSearchModal();
+            });
+
+          // ── API ────────────────────────────────────────────────────────────
+
+          function loadFilter(criteria, pg) {
+            Dashboard.showLoadingMsg();
+            ApiClient.ajax({
+              type: "POST",
+              url: apiUrl("Filter"),
+              data: JSON.stringify({
+                criteria: criteria,
+                pageNumber: pg || 1,
+                pageSize: 50,
+              }),
+              contentType: "application/json",
+              dataType: "json",
+            })
+              .then(function (result) {
+                renderResults(result);
+                Dashboard.hideLoadingMsg();
+              })
+              .catch(function (err) {
+                Dashboard.hideLoadingMsg();
+                Dashboard.alert({
+                  message: "Filter error: " + (err.statusText || err),
+                });
+              });
+          }
+
+          function doScan(then) {
+            setStatus("Scanning…");
+            return ApiClient.ajax({
+              type: "POST",
+              url: apiUrl("Scan?forceRefresh=true"),
+              dataType: "json",
+            })
+              .then(function () {
+                setStatus("");
+                document.getElementById("lblLastScan").textContent =
+                  "Last scan: just now";
+                if (then) then();
+              })
+              .catch(function (err) {
+                setStatus("Scan failed");
+                Dashboard.alert({
+                  message: "Scan error: " + (err.statusText || err),
+                });
+              });
+          }
+
+          // ── Events ─────────────────────────────────────────────────────────
+
+          document
+            .getElementById("btnScan")
+            .addEventListener("click", function () {
+              Dashboard.showLoadingMsg();
+              doScan(function () {
+                currentCriteria = buildCriteria();
+                loadFilter(currentCriteria, 1);
+                Dashboard.hideLoadingMsg();
+              });
+            });
+
+          document
+            .getElementById("btnFilter")
+            .addEventListener("click", function () {
+              currentPage = 1;
+              Dashboard.showLoadingMsg();
+              doScan(function () {
+                currentCriteria = buildCriteria();
+                loadFilter(currentCriteria, currentPage);
+                Dashboard.hideLoadingMsg();
+              });
+            });
+
+          document
+            .getElementById("btnClear")
+            .addEventListener("click", function () {
+              document.getElementById("txtTitleFilter").value = "";
+              document.getElementById("selectItemType").value = "All";
+              document.getElementById("numBackdrops").value = "";
+              page.querySelectorAll(".chkMissing").forEach(function (cb) {
+                cb.checked = false;
+              });
+              currentCriteria = {};
+              currentPage = 1;
+              loadFilter({}, 1);
+            });
+
+          page.addEventListener("pageshow", function () {
+            buildIgnoredGroup();
+            buildMissingGroup();
+            ApiClient.ajax({
+              type: "GET",
+              url: apiUrl("Results"),
+              dataType: "json",
+            })
+              .then(function (cached) {
+                if (cached && cached.length > 0) {
+                  document.getElementById("lblLastScan").textContent =
+                    "Showing cached results";
+                  currentCriteria = buildCriteria();
+                  loadFilter(currentCriteria, 1);
+                } else {
+                  doScan(function () {
+                    currentCriteria = buildCriteria();
+                    loadFilter(currentCriteria, 1);
+                  });
+                }
+              })
+              .catch(function () {
+                currentCriteria = buildCriteria();
+                loadFilter(currentCriteria, 1);
+              });
+          });
+        })();
+      </script>
     </div>
     <!-- /data-role=page -->
   </body>
