@@ -6,7 +6,7 @@ DLL_NAME="Jellyfin.Plugin.ArtisanJelly.dll"
 BUILD_OUTPUT="bin/publish"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GUID="800aa8b6-9226-4069-a99a-4cdfafcdf394"
-VERSION="1.1.0.0"
+VERSION="1.1.0.1"
 TARGET_ABI="10.11.6.0"
 
 # ── Generate meta.json ───────────────────────────────────────────────
@@ -17,7 +17,7 @@ generate_meta() {
   cat >"$SCRIPT_DIR/meta.json" <<EOF
 {
   "category": "General",
-  "changelog": "Added Web UI",
+  "changelog": "Added a logo",
   "description": "Scans your library for missing artwork and lets you fix it from one place.",
   "guid": "$GUID",
   "name": "Artisan Jelly",
@@ -26,6 +26,7 @@ generate_meta() {
   "targetAbi": "$TARGET_ABI",
   "timestamp": "$timestamp",
   "version": "$VERSION",
+  "imagePath": "/var/lib/jellyfin/plugins/${PLUGIN_NAME}_$VERSION/${PLUGIN_NAME}.png",
   "status": "Active",
   "autoUpdate": false,
   "assemblies": [
@@ -63,6 +64,12 @@ install_plugin() {
   echo "==> Copying DLL and meta.json to $plugin_dir..."
   sudo cp "$dll" "$plugin_dir/"
   sudo cp "$SCRIPT_DIR/meta.json" "$plugin_dir/"
+
+  if [ -f "$SCRIPT_DIR/$PLUGIN_NAME.png" ]; then
+    echo "==> Copying $PLUGIN_NAME.png..."
+    sudo cp "$SCRIPT_DIR/$PLUGIN_NAME.png" "$plugin_dir/"
+    sudo chmod 644 "$plugin_dir/$PLUGIN_NAME.png"
+  fi
 
   echo "==> Setting permissions (chown jellyfin:jellyfin)..."
   sudo chown -R jellyfin:jellyfin "$plugin_dir" 2>/dev/null || true
