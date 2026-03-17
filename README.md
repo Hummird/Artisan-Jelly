@@ -1,5 +1,7 @@
 # Artisan Jelly
 
+[ArtisanJelly](./artisan-jelly-logo.jpg)
+
 An Jellyfin toolkit designed to audit your media library,  
 uncover missing artwork, and easily edit items' images  
 through a powerful, integrated dashboard.
