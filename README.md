@@ -12,13 +12,51 @@ through a powerful, integrated dashboard.
 
 ---
 
+## Web UI
+
+### Filters
+
+The filtering section lets you locate specific media items by setting custom criteria:
+
+- **Title Contains:** Search for a specific word or phrase in the media title.
+- **Type:** Filter by media type, allowing you to view "All," "Movies," or "TV Shows."
+- **Backdrops Fewer Than:** Specify a maximum number of backdrops to find  
+  items lacking sufficient background variety.
+- **Missing Image Types:** Select specific missing artwork (like Logo, Banner,  
+  Thumb, Clearart, Disc, BoxRear, or Primary) to surface items that need updating.
+
+### Hide & Ignore Capabilities
+
+You can tailor the results view and filters by hiding specific image types.  
+**Hidden Items (⚙):** Any image type you mark as hidden is entirely excluded  
+from both the filtering options and the final results grid. This allows you to  
+ignore obscure image types you don't care about (e.g., BoxRear or Disc) and  
+keep your workflow clean.
+
+### On-The-Go Image Editing
+
+The interface lets you fix missing images directly without leaving the plugin page:
+
+- **Edit Images Panel:** Once you locate an item missing an image, you can  
+  click to open the editing tools.
+- **Search & Upload:** You can either search for new images online or upload a  
+  local file directly from your computer to instantly update the media item.
+- **Refresh:** A refresh button (↻) allows you to manually reload the data  
+  if for some reason is wasn't reloaded automatically
+
+---
+
 ## API Documentation
 
-The plugin exposes several endpoints under the `/Plugins/ArtisanJelly` route. All endpoints (except the initial login) require an active Jellyfin API token.
+The plugin exposes several endpoints under the `/Plugins/ArtisanJelly` route.  
+All endpoints (except the initial login) require an active Jellyfin API token.
 
 ### 1. Authentication
 
-Before interacting with the plugin, you must authenticate with Jellyfin to get an Access Token. Jellyfin strictly requires the `X-Emby-Authorization` header with specific client details to prevent `400 Bad Request` or `401 Unauthorized` errors.
+Before interacting with the plugin, you must authenticate with Jellyfin to get  
+an Access Token. Jellyfin strictly requires the `X-Emby-Authorization` header  
+with specific client details to prevent `400 Bad Request` or  
+`401 Unauthorized` errors.
 
 **Request:**
 
@@ -30,10 +68,9 @@ curl -X POST "http://localhost:8096/Users/AuthenticateByName" \
 ```
 
 **Response:**
-Extract the `AccessToken` from the JSON response. For all subsequent requests, pass this token in the header as:
+Extract the `AccessToken` from the JSON response. For all subsequent requests,  
+pass this token in the header as:
 `Authorization: MediaBrowser Token="YOUR_ACCESS_TOKEN"`
-
----
 
 ### 2. Plugin Endpoints
 
@@ -66,7 +103,8 @@ curl -X GET "http://localhost:8096/Plugins/ArtisanJelly/Results" \
 
 #### Filter Scanned Items
 
-Allows complex querying of the scanned library based on missing images, item types, or backdrop counts. Requires a JSON payload.
+Allows complex querying of the scanned library based on missing images, item  
+types, or backdrop counts. Requires a JSON payload.
 
 **Request:**
 
