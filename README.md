@@ -1,5 +1,7 @@
 # Artisan Jelly
 
+![artisan-jelly-logo](https://github.com/user-attachments/assets/3f245886-2f76-42fb-8b1a-e4d7f11f6cee)
+
 An Jellyfin toolkit designed to audit your media library,  
 uncover missing artwork, and easily edit items' images  
 through a powerful, integrated dashboard.
