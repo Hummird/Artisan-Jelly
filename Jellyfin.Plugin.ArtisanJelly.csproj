@@ -4,8 +4,8 @@
     <RootNamespace>Jellyfin.Plugin.ArtisanJelly</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.ArtisanJelly</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <AssemblyVersion>1.1.0.2</AssemblyVersion>
-    <FileVersion>1.1.0.2</FileVersion>
+    <AssemblyVersion>1.1.0.3</AssemblyVersion>
+    <FileVersion>1.1.0.3</FileVersion>
     <Nullable>disable</Nullable>
     <NoWarn>1591</NoWarn>
   </PropertyGroup>

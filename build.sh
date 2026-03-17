@@ -6,7 +6,7 @@ DLL_NAME="Jellyfin.Plugin.ArtisanJelly.dll"
 BUILD_OUTPUT="bin/publish"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GUID="800aa8b6-9226-4069-a99a-4cdfafcdf394"
-VERSION="1.1.0.2"
+VERSION="1.1.0.3"
 TARGET_ABI="10.11.6.0"
 
 # ── Generate meta.json ───────────────────────────────────────────────
@@ -17,7 +17,7 @@ generate_meta() {
   cat >"$SCRIPT_DIR/meta.json" <<EOF
 {
   "category": "General",
-  "changelog": "Fixed issue with logo and configPage not showing if installed from manifest",
+  "changelog": "Fixed transparent background on modal",
   "description": "Scans your library for missing artwork and lets you fix it from one place.",
   "guid": "$GUID",
   "name": "$PLUGIN_NAME",
