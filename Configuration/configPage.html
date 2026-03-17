@@ -10,6 +10,431 @@
       id="ArtisanJellyPage"
       data-require="emby-input,emby-button,emby-select,emby-checkbox"
     >
+      <style>
+        /* Resetting some default values */
+        .aj-content-primary.content-primary {
+          max-width: 100rem;
+          margin: auto;
+        }
+
+        .emby-checkbox-label {
+          width: fit-content;
+        }
+
+        .emby-button.lightbtn {
+          color: #202020;
+        }
+
+        /* Checkbox group layout */
+        .aj-cbgroup {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.3em 0.5em;
+          margin-top: 0.5em;
+        }
+
+        /* Ignored-fields box */
+        .aj-ignored-box {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 4px;
+          padding: 0.8em 1em;
+          margin-bottom: 1.5em;
+
+          .aj-ignored-title {
+            font-size: 0.72em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.45;
+            margin-bottom: 0.3em;
+          }
+        }
+
+        /* Header */
+        .aj-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          margin-bottom: 1.5em;
+
+          .aj-sub {
+            font-size: 0.75em;
+            opacity: 0.4;
+            margin-top: 0.2em;
+          }
+
+          #divScanStatus {
+            font-size: 0.8em;
+            opacity: 0.5;
+          }
+        }
+
+        /* Filters row */
+        .aj-filter-row {
+          display: flex;
+          gap: 1em;
+          flex-wrap: wrap;
+          flex-direction: column;
+          margin-bottom: 1em;
+
+          .inputContainer,
+          .selectContainer {
+            margin: 0;
+            flex: 1;
+            min-width: 140px;
+          }
+
+          .aj-bd-label {
+            display: block;
+            font-size: 0.8em;
+            opacity: 0.65;
+            margin-bottom: 0.25em;
+          }
+
+          #numBackdrops {
+            width: 80px !important;
+          }
+        }
+
+        /* Result rows */
+        .aj-row {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          gap: 0.85em;
+          padding: 0.6em 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .aj-thumb,
+          .aj-thumb-ph {
+            width: 42px;
+            min-width: 42px;
+            height: 63px;
+            border-radius: 3px;
+            object-fit: cover;
+            flex-shrink: 0;
+          }
+
+          .aj-thumb-ph {
+            background: rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.2);
+          }
+
+          .aj-info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+
+            .aj-title {
+              font-weight: 500;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              font-size: 0.95em;
+            }
+
+            .aj-type {
+              font-size: 0.73em;
+              opacity: 0.4;
+              margin: 0.1em 0 0.35em;
+            }
+
+            .aj-pill {
+              display: inline-block;
+              background: var(--theme-error-color, #c0392b);
+              color: #fff;
+              border-radius: 3px;
+              padding: 1px 6px;
+              font-size: 0.7em;
+              margin: 1px 2px 1px 0;
+            }
+
+            .aj-ok {
+              font-size: 0.78em;
+              color: var(--theme-success-color, #4caf50);
+            }
+          }
+
+          .aj-edit-btn {
+            flex-shrink: 0;
+            margin-left: auto;
+            padding: 0.38em 0.85em;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 3px;
+            color: var(--text-color, #ddd) !important;
+            cursor: pointer;
+            font-size: 0.82em;
+            white-space: nowrap;
+            font-family: inherit;
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.14);
+            }
+          }
+        }
+
+        /* ── Native-style modal overlays ── */
+        #ajModalOverlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          z-index: 9000;
+          background: rgba(0, 0, 0, 0.6);
+          align-items: center;
+          justify-content: center;
+
+          &.open {
+            display: flex;
+          }
+
+          /* Use Jellyfin's own formDialog classes for native look */
+          .aj-dialog {
+            width: 90vw;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #101010;
+
+            .formDialogContent {
+              overflow-y: auto;
+              flex: 1;
+              padding: 1.5em;
+              background: #101010;
+
+              /* Image type sections */
+              .aj-section-title {
+                font-size: 1em;
+                font-weight: 600;
+                margin: 0 0 0.7em;
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+
+                .aj-count {
+                  font-size: 0.75em;
+                  opacity: 0.5;
+                  font-weight: normal;
+                }
+              }
+
+              /* Image cards grid (matches Jellyfin's image card style) */
+              .aj-img-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75em;
+                margin-bottom: 1.5em;
+
+                .aj-img-card {
+                  width: 120px;
+                  background: var(
+                    --card-hover-background,
+                    rgba(255, 255, 255, 0.05)
+                  );
+                  border-radius: 4px;
+                  overflow: hidden;
+                  border: 2px solid transparent;
+                  cursor: default;
+                  flex-shrink: 0;
+
+                  &.selectable {
+                    cursor: pointer;
+
+                    &:hover {
+                      border-color: var(--theme-button-background, #52b54b);
+                    }
+                  }
+
+                  &.selected {
+                    border-color: var(--theme-button-background, #52b54b);
+                  }
+
+                  img {
+                    width: 100%;
+                    display: block;
+                    object-fit: cover;
+                  }
+
+                  &.portrait img {
+                    height: 180px;
+                  }
+
+                  &.landscape img {
+                    height: 68px;
+                  }
+
+                  .aj-card-info {
+                    padding: 0.3em 0.4em;
+                    font-size: 0.7em;
+                    opacity: 0.6;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                  }
+
+                  .aj-card-actions {
+                    display: flex;
+                    gap: 0.3em;
+                    padding: 0.3em 0.4em;
+                    border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+                    .aj-card-btn {
+                      flex: 1;
+                      padding: 0.25em;
+                      background: none;
+                      border: none;
+                      cursor: pointer;
+                      font-size: 1em;
+                      opacity: 0.6;
+                      color: var(--text-color, #ddd);
+                      border-radius: 2px;
+
+                      &:hover {
+                        opacity: 1;
+                        background: rgba(255, 255, 255, 0.08);
+                      }
+                    }
+                  }
+                }
+
+                /* Add card (placeholder) */
+                .aj-add-card {
+                  width: 120px;
+                  flex-shrink: 0;
+                  border-radius: 4px;
+                  border: 2px dashed rgba(255, 255, 255, 0.15);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  gap: 0.3em;
+                  padding: 0.5em;
+                  text-align: center;
+                  color: rgba(255, 255, 255, 0.35);
+                  font-size: 0.8em;
+                  transition:
+                    border-color 0.15s,
+                    color 0.15s;
+
+                  &.portrait {
+                    height: calc(180px + 2px);
+                    min-height: 182px;
+                  }
+
+                  &.landscape {
+                    min-height: 68px;
+                  }
+
+                  &:hover {
+                    border-color: rgba(255, 255, 255, 0.4);
+                    color: rgba(255, 255, 255, 0.7);
+                  }
+
+                  .aj-add-card-icon {
+                    font-size: 1.6em;
+                    line-height: 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        /* Search modal (sub-modal) */
+        #ajSearchOverlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          z-index: 9100;
+          background: rgba(0, 0, 0, 0.7);
+          align-items: center;
+          justify-content: center;
+
+          &.open {
+            display: flex;
+          }
+
+          .aj-search-dialog {
+            width: 90vw;
+            max-width: 860px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: 6px;
+            overflow: hidden;
+
+            .aj-search-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+              gap: 0.6em;
+              margin-top: 1em;
+
+              &.landscape {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+              }
+
+              .aj-search-item {
+                border-radius: 4px;
+                overflow: hidden;
+                cursor: pointer;
+                border: 2px solid transparent;
+                background: rgba(255, 255, 255, 0.05);
+                transition: border-color 0.1s;
+
+                &:hover {
+                  border-color: var(--theme-button-background, #52b54b);
+                }
+
+                img {
+                  width: 100%;
+                  display: block;
+                  object-fit: cover;
+                }
+
+                &.portrait img {
+                  height: 180px;
+                }
+
+                &.landscape img {
+                  height: 113px;
+                }
+
+                .aj-si-info {
+                  padding: 0.25em 0.4em;
+                  font-size: 0.68em;
+                  opacity: 0.55;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                }
+              }
+            }
+
+            #searchStatus,
+            #uploadHint {
+              font-size: 0.82em;
+              opacity: 0.5;
+              margin-top: 0.5em;
+            }
+
+            #searchStatus {
+              min-height: 1.2em;
+            }
+          }
+        }
+      </style>
 
       <div data-role="content">
         <div class="aj-content-primary content-primary">
