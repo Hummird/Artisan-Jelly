@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Artisan Jelly</title>
+  </head>
+  <body>
+    <div
+      data-role="page"
+      class="page type-interior pluginConfigurationPage"
+      id="ArtisanJellyPage"
+      data-require="emby-input,emby-button,emby-select,emby-checkbox"
+    >
+
+      <div data-role="content">
+        <div class="aj-content-primary content-primary">
+          <!-- Header -->
+          <div class="aj-header">
+            <div>
+              <h2 class="sectionTitle" style="margin: 0">Artisan Jelly</h2>
+              <div class="aj-sub" id="lblLastScan"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5em">
+              <span id="divScanStatus"></span>
+              <button
+                is="emby-button"
+                type="button"
+                class="emby-button lightbtn"
+                id="btnScan"
+                style="opacity: 0.7; font-size: 0.82em"
+                title="Re-scan library"
+              >
+                ↻ Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Hidden fields -->
+          <details class="aj-ignored-box">
+            <summary class="aj-ignored-title">
+              ⚙ Hidden — ignored in filters and results
+            </summary>
+            <div class="aj-cbgroup" id="grpIgnored"></div>
+            <details class="aj-ignored-box">
+              <summary class="aj-ignored-title">Help</summary>
+              <ul>
+                <li>
+                  <strong>Primary</strong> — The main poster. Vertical cover
+                  art, shown everywhere: library grid, search results, item
+                  page.
+                </li>
+                <li>
+                  <strong>Logo</strong> — The title as a transparent PNG graphic
+                  (stylized text/wordmark). Displayed overlaid on backgrounds in
+                  detail views.
+                </li>
+                <li>
+                  <strong>Backdrop</strong> — Full-width background image shown
+                  behind the item detail page. Multiple backdrops can exist and
+                  rotate.
+                </li>
+                <li>
+                  <strong>Banner</strong> — Wide horizontal strip image
+                  (typically 758×140). Used in some clients as an alternate
+                  list/header view.
+                </li>
+                <li>
+                  <strong>Thumb</strong> — Wide landscape thumbnail (16:9). Used
+                  in episode lists and some card layouts instead of the vertical
+                  poster.
+                </li>
+                <li>
+                  <strong>Clearart</strong> — Character or scene artwork on a
+                  transparent background. Decorative, shown in some skins
+                  alongside metadata.
+                </li>
+                <li>
+                  <strong>Disc</strong> — A circular image of the physical disc
+                  (DVD/Blu-ray label art). Mostly cosmetic, shown in detailed
+                  metadata views.
+                </li>
+                <li>
+                  <strong>BoxRear</strong> — The back of the physical box/case.
+                  Informational, rarely displayed by clients — mostly for
+                  completionists.
+                </li>
+              </ul>
+            </details>
+          </details>
+
+          <!-- Filters -->
+          <div class="verticalSection" style="margin-bottom: 1.5em">
+            <h3 class="sectionTitle">Filters</h3>
+            <div class="aj-filter-row">
+              <div class="inputContainer">
+                <label
+                  class="inputLabel inputLabelUnfocused"
+                  for="txtTitleFilter"
+                  >Title contains</label
+                >
+                <input is="emby-input" type="text" id="txtTitleFilter" />
+              </div>
+              <div class="selectContainer">
+                <label class="selectLabel" for="selectItemType">Type</label>
+                <select is="emby-select" id="selectItemType">
+                  <option value="All">All</option>
+                  <option value="Movie">Movies</option>
+                  <option value="Series">TV Shows</option>
+                </select>
+              </div>
+              <div>
+                <span class="aj-bd-label">Backdrops fewer than</span>
+                <input
+                  is="emby-input"
+                  type="number"
+                  id="numBackdrops"
+                  min="0"
+                  max="99"
+                  placeholder="—"
+                />
+              </div>
+            </div>
+            <div>
+              <span style="font-size: 0.8em; opacity: 0.65"
+                >Missing image types:</span
+              >
+              <div class="aj-cbgroup" id="grpMissing"></div>
+            </div>
+            <div style="margin-top: 1em; display: flex; gap: 0.5em">
+              <button
+                is="emby-button"
+                type="button"
+                class="raised emby-button"
+                id="btnFilter"
+              >
+                Apply Filters
+              </button>
+              <button
+                is="emby-button"
+                type="button"
+                class="emby-button lightbtn"
+                id="btnClear"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="verticalSection" id="divResults" style="display: none">
+            <h3 class="sectionTitle">
+              Results
+              <span
+                id="spanResultCount"
+                style="font-weight: normal; font-size: 0.82em; opacity: 0.5"
+              ></span>
+            </h3>
+            <div id="divResultsList"></div>
+            <div
+              id="divPager"
+              style="
+                display: flex;
+                justify-content: center;
+                gap: 0.4em;
+                margin-top: 1em;
+                flex-wrap: wrap;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ EDIT IMAGES MODAL ═══ -->
+      <div id="ajModalOverlay">
+        <div class="aj-dialog formDialog">
+          <div class="formDialogHeader">
+            <button
+              is="emby-button"
+              type="button"
+              class="btnCancel paper-icon-button-light emby-button"
+              id="btnModalClose"
+            >
+              <span
+                class="material-icons keyboard_arrow_left"
+                aria-hidden="true"
+              ></span>
+            </button>
+            <h3 class="formDialogHeaderTitle" id="modalTitle">Edit Images</h3>
+          </div>
+          <div class="formDialogContent smoothScrollY">
+            <div id="modalBody"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SEARCH / UPLOAD SUB-MODAL ═══ -->
+      <div id="ajSearchOverlay">
+        <div class="aj-search-dialog formDialog">
+          <div class="formDialogHeader">
+            <button
+              is="emby-button"
+              type="button"
+              class="btnCancel paper-icon-button-light emby-button"
+              id="btnSearchClose"
+            >
+              <span
+                class="material-icons keyboard_arrow_left"
+                aria-hidden="true"
+              ></span>
+            </button>
+            <h3 class="formDialogHeaderTitle" id="searchTitle">
+              Search Images
+            </h3>
+          </div>
+          <div class="formDialogContent smoothScrollY">
+            <!-- Upload section -->
+            <div style="margin-bottom: 1em">
+              <label
+                is="emby-button"
+                class="raised emby-button"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.4em;
+                  cursor: pointer;
+                  margin-bottom: 0.4em;
+                "
+              >
+                Upload from file
+                <input
+                  type="file"
+                  id="fileUpload"
+                  accept="image/*"
+                  style="display: none"
+                />
+              </label>
+              <div id="uploadHint"></div>
+            </div>
+            <div
+              style="
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 1em;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: 0.5em;
+                "
+              >
+                <span style="font-size: 0.9em; opacity: 0.7"
+                  >Online results</span
+                >
+                <div id="searchStatus"></div>
+              </div>
+              <div id="ajSearchGrid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /data-role=page -->
+  </body>
+</html>
