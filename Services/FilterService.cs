@@ -32,7 +32,10 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             if (!string.IsNullOrEmpty(criteria.TitleFilter))
             {
                 var search = criteria.TitleFilter.ToLower();
-                filtered = filtered.Where(x => x.ItemName.ToLower().Contains(search));
+                // null check to prevent crashes
+                filtered = filtered.Where(x =>
+                    x.ItemName != null && x.ItemName.ToLower().Contains(search)
+                );
             }
 
             // Filter by missing images
