@@ -469,52 +469,84 @@
             <summary class="aj-ignored-title">
               ⚙ Hidden — ignored in filters and results
             </summary>
-            <div class="aj-cbgroup" id="grpIgnored"></div>
-            <details class="aj-ignored-box">
-              <summary class="aj-ignored-title">Help</summary>
-              <ul>
-                <li>
-                  <strong>Primary</strong> — The main poster. Vertical cover
-                  art, shown everywhere: library grid, search results, item
-                  page.
-                </li>
-                <li>
-                  <strong>Logo</strong> — The title as a transparent PNG graphic
-                  (stylized text/wordmark). Displayed overlaid on backgrounds in
-                  detail views.
-                </li>
-                <li>
-                  <strong>Backdrop</strong> — Full-width background image shown
-                  behind the item detail page. Multiple backdrops can exist and
-                  rotate.
-                </li>
-                <li>
-                  <strong>Banner</strong> — Wide horizontal strip image
-                  (typically 758×140). Used in some clients as an alternate
-                  list/header view.
-                </li>
-                <li>
-                  <strong>Thumb</strong> — Wide landscape thumbnail (16:9). Used
-                  in episode lists and some card layouts instead of the vertical
-                  poster.
-                </li>
-                <li>
-                  <strong>Clearart</strong> — Character or scene artwork on a
-                  transparent background. Decorative, shown in some skins
-                  alongside metadata.
-                </li>
-                <li>
-                  <strong>Disc</strong> — A circular image of the physical disc
-                  (DVD/Blu-ray label art). Mostly cosmetic, shown in detailed
-                  metadata views.
-                </li>
-                <li>
-                  <strong>BoxRear</strong> — The back of the physical box/case.
-                  Informational, rarely displayed by clients — mostly for
-                  completionists.
-                </li>
-              </ul>
-            </details>
+
+            <fieldset>
+              <legend>Image Types</legend>
+              <div class="aj-cbgroup" id="grpIgnoredImageTypes"></div>
+
+              <details class="aj-ignored-box">
+                <summary class="aj-ignored-title">Help</summary>
+                <ul>
+                  <li>
+                    <strong>Primary</strong> — The main poster. Vertical cover
+                    art, shown everywhere: library grid, search results, item
+                    page.
+                  </li>
+                  <li>
+                    <strong>Logo</strong> — The title as a transparent PNG
+                    graphic (stylized text/wordmark). Displayed overlaid on
+                    backgrounds in detail views.
+                  </li>
+                  <li>
+                    <strong>Backdrop</strong> — Full-width background image
+                    shown behind the item detail page. Multiple backdrops can
+                    exist and rotate.
+                  </li>
+                  <li>
+                    <strong>Banner</strong> — Wide horizontal strip image
+                    (typically 758×140). Used in some clients as an alternate
+                    list/header view.
+                  </li>
+                  <li>
+                    <strong>Thumb</strong> — Wide landscape thumbnail (16:9).
+                    Used in episode lists and some card layouts instead of the
+                    vertical poster.
+                  </li>
+                  <li>
+                    <strong>Clearart</strong> — Character or scene artwork on a
+                    transparent background. Decorative, shown in some skins
+                    alongside metadata.
+                  </li>
+                  <li>
+                    <strong>Disc</strong> — A circular image of the physical
+                    disc (DVD/Blu-ray label art). Mostly cosmetic, shown in
+                    detailed metadata views.
+                  </li>
+                  <li>
+                    <strong>BoxRear</strong> — The back of the physical
+                    box/case. Informational, rarely displayed by clients —
+                    mostly for completionists.
+                  </li>
+                </ul>
+              </details>
+            </fieldset>
+
+            <fieldset>
+              <legend>Item Types</legend>
+              <div class="aj-cbgroup" id="grpIgnoredItemTypes"></div>
+
+              <details class="aj-ignored-box">
+                <summary class="aj-ignored-title">Help</summary>
+                <ul>
+                  <li><strong>Movie</strong> — A standalone film.</li>
+                  <li><strong>Series</strong> — A TV show container.</li>
+                  <li>
+                    <strong>Season</strong> — A season container inside a
+                    series.
+                  </li>
+                  <li><strong>Episode</strong> — A single episode item.</li>
+                  <li>
+                    <strong>Person</strong> — A cast or crew person record.
+                  </li>
+                  <li><strong>MusicAlbum</strong> — A music album release.</li>
+                  <li>
+                    <strong>Audio</strong> — A single song or audio track.
+                  </li>
+                  <li><strong>MusicArtist</strong> — An artist entity.</li>
+                  <li><strong>BoxSet</strong> — A collection / grouped set.</li>
+                </ul>
+              </details>
+            </fieldset>
           </details>
 
           <!-- Filters -->
@@ -699,7 +731,7 @@
 
       <script>
         (function () {
-          var ALL_TYPES = [
+          var ALL_IMAGE_TYPES = [
             "Primary",
             "Logo",
             "Backdrop",
@@ -709,7 +741,21 @@
             "Disc",
             "BoxRear",
           ];
-          var STOR_KEY = "aj_hidden_v1";
+          var ALL_ITEM_TYPES = [
+            "Movie",
+            "Series",
+            "Season",
+            "Episode",
+            "Person",
+            "MusicAlbum",
+            "Audio",
+            "MusicArtist",
+            "BoxSet",
+          ];
+
+          var STOR_KEY_IMG = "aj_hidden_image_types";
+          var STOR_KEY_ITEM = "aj_hidden_item_types";
+
           var page = document.getElementById("ArtisanJellyPage");
           var currentPage = 1;
           var currentCriteria = {};
@@ -735,20 +781,40 @@
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;");
           }
-          function getHidden() {
+          function getHiddenImages() {
             try {
-              return JSON.parse(localStorage.getItem(STOR_KEY) || "[]");
+              return JSON.parse(localStorage.getItem(STOR_KEY_IMG) || "[]");
             } catch (e) {
               return [];
             }
           }
-          function setHidden(a) {
-            localStorage.setItem(STOR_KEY, JSON.stringify(a));
+          function setHiddenImages(a) {
+            localStorage.setItem(STOR_KEY_IMG, JSON.stringify(a));
           }
-          function getVisible() {
-            var h = getHidden();
-            return ALL_TYPES.filter(function (t) {
+          function getVisibleImages() {
+            var h = getHiddenImages();
+            return ALL_IMAGE_TYPES.filter(function (t) {
               return h.indexOf(t) === -1;
+            });
+          }
+
+          function getHiddenItems() {
+            try {
+              return JSON.parse(localStorage.getItem(STOR_KEY_ITEM) || "[]");
+            } catch (e) {
+              return [];
+            }
+          }
+
+          function setHiddenItems(a) {
+            localStorage.setItem(STOR_KEY_ITEM, JSON.stringify(a));
+          }
+
+          function thumbUrl(id) {
+            return ApiClient.getUrl("Items/" + id + "/Images/Primary", {
+              maxWidth: 42,
+              maxHeight: 63,
+              quality: 90,
             });
           }
 
@@ -772,20 +838,22 @@
             return d.firstChild; // the <label>
           }
 
-          function buildIgnoredGroup() {
-            var hidden = getHidden();
-            var c = document.getElementById("grpIgnored");
+          function buildIgnoredImageTypesGroup() {
+            var hidden = getHiddenImages();
+            var c = document.getElementById("grpIgnoredImageTypes");
+
             c.innerHTML = "";
-            ALL_TYPES.forEach(function (type) {
+            ALL_IMAGE_TYPES.forEach(function (type) {
               var lbl = makeCheckbox(
                 type,
-                "chkIgnored",
+                "chkIgnoredImage",
                 hidden.indexOf(type) !== -1,
               );
               lbl
                 .querySelector("input")
                 .addEventListener("change", function (e) {
-                  var cur = getHidden();
+                  var cur = getHiddenImages();
+
                   if (e.target.checked) {
                     if (cur.indexOf(type) === -1) cur.push(type);
                   } else {
@@ -793,15 +861,50 @@
                       return x !== type;
                     });
                   }
-                  setHidden(cur);
+
+                  setHiddenImages(cur);
                   buildMissingGroup();
                 });
+
+              c.appendChild(lbl);
+            });
+          }
+
+          function buildIgnoredItemTypesGroup() {
+            var hidden = getHiddenItems();
+            var c = document.getElementById("grpIgnoredItemTypes");
+            if (!c) return;
+
+            c.innerHTML = "";
+            ALL_ITEM_TYPES.forEach(function (type) {
+              var lbl = makeCheckbox(
+                type,
+                "chkIgnoredItem",
+                hidden.indexOf(type) !== -1,
+              );
+
+              lbl
+                .querySelector("input")
+                .addEventListener("change", function (e) {
+                  var cur = getHiddenItems();
+
+                  if (e.target.checked) {
+                    if (cur.indexOf(type) === -1) cur.push(type);
+                  } else {
+                    cur = cur.filter(function (x) {
+                      return x !== type;
+                    });
+                  }
+
+                  setHiddenItems(cur);
+                });
+
               c.appendChild(lbl);
             });
           }
 
           function buildMissingGroup() {
-            var visible = getVisible().filter(function (t) {
+            var visible = getVisibleImages().filter(function (t) {
               return t !== "Backdrop";
             });
             var c = document.getElementById("grpMissing");
@@ -813,7 +916,7 @@
             // Hide the "Backdrops fewer than" input field if hidden
             var bdInput = document.getElementById("numBackdrops");
             if (bdInput && bdInput.parentElement) {
-              var isHidden = getHidden().indexOf("Backdrop") !== -1;
+              var isHidden = getHiddenImages().indexOf("Backdrop") !== -1;
               bdInput.parentElement.style.display = isHidden ? "none" : "";
             }
           }
@@ -832,6 +935,7 @@
               missingImages: missing,
               maxBackdrops:
                 bd !== "" ? Math.max(0, parseInt(bd, 10) - 1) : null,
+              ignoredItemTypes: getHiddenItems(),
             };
           }
 
@@ -849,7 +953,7 @@
             var list = document.getElementById("divResultsList");
             var pager = document.getElementById("divPager");
             var section = document.getElementById("divResults");
-            var hidden = getHidden();
+            var hidden = getHiddenImages();
 
             document.getElementById("spanResultCount").textContent =
               "(" + data.TotalCount + " items)";
@@ -866,6 +970,7 @@
             data.Items.forEach(function (item) {
               var missing = [];
               var imgs = item.SingularImages || {};
+
               Object.keys(imgs).forEach(function (k) {
                 if (!imgs[k] && hidden.indexOf(k) === -1) missing.push(k);
               });
@@ -1238,19 +1343,7 @@
                   '<span class="material-icons check" style="vertical-align: middle;"></span> Applied!';
                 setTimeout(function () {
                   closeSearchModal();
-                  modalImages = {};
-                  ApiClient.ajax({
-                    type: "GET",
-                    url: ApiClient.getUrl("Items/" + modalItemId + "/Images"),
-                    dataType: "json",
-                  }).then(function (images) {
-                    images.forEach(function (img) {
-                      if (!modalImages[img.ImageType])
-                        modalImages[img.ImageType] = [];
-                      modalImages[img.ImageType].push(img);
-                    });
-                    renderEditModal();
-                  });
+                  openEditModal(modalItemId, modalItemName);
                 }, 800);
               })
               .catch(function (err) {
@@ -1307,25 +1400,8 @@
                     uploadTargetType = null;
 
                     setTimeout(function () {
-                      var searchOverlay =
-                        document.getElementById("iscanSearchOverlay");
-                      if (searchOverlay) searchOverlay.classList.remove("open");
-
-                      modalImages = {};
-                      ApiClient.ajax({
-                        type: "GET",
-                        url: ApiClient.getUrl(
-                          "Items/" + modalItemId + "/Images",
-                        ),
-                        dataType: "json",
-                      }).then(function (images) {
-                        images.forEach(function (img) {
-                          if (!modalImages[img.ImageType])
-                            modalImages[img.ImageType] = [];
-                          modalImages[img.ImageType].push(img);
-                        });
-                        renderEditModal();
-                      });
+                      closeSearchModal();
+                      openEditModal(modalItemId, modalItemName);
                     }, 800);
                   })
                   .catch(function (err) {
@@ -1356,20 +1432,7 @@
 
             ApiClient.ajax({ type: "DELETE", url: url })
               .then(function () {
-                // Re-fetch images from server to ensure indices are perfectly in sync
-                modalImages = {};
-                ApiClient.ajax({
-                  type: "GET",
-                  url: ApiClient.getUrl("Items/" + modalItemId + "/Images"),
-                  dataType: "json",
-                }).then(function (images) {
-                  images.forEach(function (img) {
-                    if (!modalImages[img.ImageType])
-                      modalImages[img.ImageType] = [];
-                    modalImages[img.ImageType].push(img);
-                  });
-                  renderEditModal();
-                });
+                openEditModal(modalItemId, modalItemName);
               })
               .catch(function (err) {
                 Dashboard.alert({ message: "Delete failed." });
@@ -1411,6 +1474,8 @@
               dataType: "json",
             })
               .then(function (result) {
+                currentCriteria = criteria || {};
+                currentPage = pg || 1;
                 renderResults(result);
                 Dashboard.hideLoadingMsg();
               })
@@ -1483,7 +1548,8 @@
             });
 
           page.addEventListener("pageshow", function () {
-            buildIgnoredGroup();
+            buildIgnoredImageTypesGroup();
+            buildIgnoredItemTypesGroup();
             buildMissingGroup();
             ApiClient.ajax({
               type: "GET",
