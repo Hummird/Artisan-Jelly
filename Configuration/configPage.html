@@ -1010,6 +1010,7 @@
 
               if (
                 hidden.indexOf("Backdrop") === -1 &&
+                supportsBackdrop(item.ItemType) &&
                 (item.BackdropCount || 0) < bdTarget
               ) {
                 missing.push("Backdrop");
