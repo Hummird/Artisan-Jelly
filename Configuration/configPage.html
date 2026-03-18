@@ -110,6 +110,10 @@
             border-bottom: none;
           }
 
+          a {
+            display: contents;
+          }
+
           .aj-thumb,
           .aj-thumb-ph {
             width: 42px;
@@ -1023,7 +1027,13 @@
               row.className = "aj-row";
 
               // Thumbnail
-              var tw = document.createElement("div");
+              var tw = document.createElement("a");
+              tw.href =
+                "#!/details?id=" +
+                item.ItemId +
+                "&serverId=" +
+                ApiClient.serverId();
+              tw.target = "_self";
               if (imgs["Primary"]) {
                 var img = document.createElement("img");
                 img.className = "aj-thumb";
@@ -1049,8 +1059,13 @@
               info.className = "aj-info";
               info.innerHTML =
                 '<div class="aj-title">' +
+                '<a href="#!/details?id=' +
+                item.ItemId +
+                "&serverId=" +
+                ApiClient.serverId() +
+                '" style="color:inherit;text-decoration:none;">' +
                 escHtml(item.ItemName) +
-                "</div>" +
+                "</a></div>" +
                 '<div class="aj-type">' +
                 escHtml(item.ItemType) +
                 "</div>" +
