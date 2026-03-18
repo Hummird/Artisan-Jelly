@@ -8,9 +8,17 @@ through a powerful, integrated dashboard.
 
 ## Installation
 
-1. Build the plugin using the .NET 8 SDK: `dotnet publish -c Release`
-2. Copy the resulting `.dll` files to your Jellyfin `plugins/ArtisanJelly` directory.
+1. Download the latest release
+2. Unpack the contents of the release into your Jellyfin plugins directory.
 3. Restart your Jellyfin server.
+
+## Building from Source
+
+1. Make sure you have the .NET SDK installed on your machine.
+2. Make build.sh executable by running `chmod +x build.sh`.
+3. Build the plugin using `./build.sh --install` to compile and move all  
+   the necessary files to the plugins directory, and restart  
+   the server automatically.
 
 ---
 
