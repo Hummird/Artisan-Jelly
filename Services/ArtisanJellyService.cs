@@ -5,11 +5,8 @@ using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.ArtisanJelly.Models;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Movies;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.ArtisanJelly.Services
@@ -56,8 +53,19 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             var query = new InternalItemsQuery
             {
                 Recursive = true,
-                // Use BaseItemKind enum — NOT strings
-                IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
+                // Expand the item types we care about scanning
+                IncludeItemTypes = new[]
+                {
+                    BaseItemKind.Movie,
+                    BaseItemKind.Series,
+                    BaseItemKind.Season,
+                    BaseItemKind.Episode,
+                    BaseItemKind.Person, // Actors/Directors
+                    BaseItemKind.MusicAlbum,
+                    BaseItemKind.Audio, // Songs
+                    BaseItemKind.MusicArtist,
+                    BaseItemKind.BoxSet, // Collections
+                },
             };
 
             var queryResult = _libraryManager.GetItemsResult(query);
@@ -80,7 +88,8 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             {
                 ItemId = item.Id.ToString(),
                 ItemName = item.Name,
-                ItemType = item is Movie ? "Movie" : "Series",
+                // Dynamically use the item's underlying class name (e.g. "Movie", "Person", etc.)
+                ItemType = item.GetType().Name,
                 LastScanned = DateTime.UtcNow,
             };
 

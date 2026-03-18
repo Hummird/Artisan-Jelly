@@ -89,6 +89,14 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                 MissingImageCounts = new(),
             };
 
+            // Calculate distinct item types dynamically
+            stats.AvailableItemTypes = items
+                .Where(x => !string.IsNullOrWhiteSpace(x.ItemType))
+                .Select(x => x.ItemType)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToArray();
+
             var completeCount = 0;
             var missingCount = 0;
             int totalBackdrops = 0;

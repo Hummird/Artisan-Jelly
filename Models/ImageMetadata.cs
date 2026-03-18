@@ -10,7 +10,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
     {
         public string ItemId { get; set; }
         public string ItemName { get; set; }
-        public string ItemType { get; set; } // "Movie" or "Series"
+        public string ItemType { get; set; }
         public DateTime LastScanned { get; set; }
 
         // Singular images: true if present, false if missing
@@ -70,7 +70,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public int? MinBackdrops { get; set; }
         public int? MaxBackdrops { get; set; }
         public string TitleFilter { get; set; }
-        public string ItemType { get; set; } // "Movie", "Series", or "All"
+        public string ItemType { get; set; }
         public bool? IsComplete { get; set; }
     }
 
@@ -109,5 +109,8 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public int ItemsComplete { get; set; }
         public int AverageBackdropCount { get; set; }
         public Dictionary<string, int> MissingImageCounts { get; set; }
+
+        // Dynamically calculated list of item types currently in the library
+        public string[] AvailableItemTypes { get; set; } = Array.Empty<string>();
     }
 }
