@@ -1075,22 +1075,61 @@
             var totalPages = Math.ceil((data.TotalCount || 0) / 50);
 
             if (totalPages > 1) {
-              for (var p = 1; p <= totalPages; p++) {
-                (function (pg) {
-                  var btn = document.createElement("button");
-                  btn.setAttribute("is", "emby-button");
-                  btn.type = "button";
-                  btn.className =
-                    "emby-button " +
-                    (pg === currentPage ? "raised" : "lightbtn");
-                  btn.textContent = pg;
-                  btn.addEventListener("click", function () {
-                    currentPage = pg;
-                    loadFilter(currentCriteria, pg);
-                  });
-                  pager.appendChild(btn);
-                })(p);
-              }
+              var WING = 3;
+
+              var pages = new Set();
+
+              // First wing: 1, 2, 3
+              for (var i = 1; i <= Math.min(WING, totalPages); i++)
+                pages.add(i);
+
+              // Last wing:  n-2, n-1, n
+              for (
+                var i = Math.max(1, totalPages - WING + 1);
+                i <= totalPages;
+                i++
+              )
+                pages.add(i);
+
+              // Always keep current page and its immediate neighbours visible
+              pages.add(Math.max(1, currentPage - 1));
+              pages.add(currentPage);
+              pages.add(Math.min(totalPages, currentPage + 1));
+
+              var sorted = Array.from(pages).sort(function (a, b) {
+                return a - b;
+              });
+
+              var prev = 0;
+              sorted.forEach(function (pg) {
+                // Gap between last rendered page and this one -> insert ellipsis
+                if (pg - prev > 1) {
+                  var sep = document.createElement("span");
+                  sep.textContent = "…";
+                  sep.style.cssText =
+                    "padding: 0 0.25em; opacity: 0.35; align-self: center; font-size: 1em;";
+                  pager.appendChild(sep);
+                }
+
+                var btn = document.createElement("button");
+                btn.setAttribute("is", "emby-button");
+                btn.type = "button";
+                btn.className =
+                  "emby-button " + (pg === currentPage ? "raised" : "lightbtn");
+                btn.textContent = pg;
+                btn.addEventListener(
+                  "click",
+                  (function (p) {
+                    return function () {
+                      currentPage = p;
+                      loadFilter(currentCriteria, p);
+                    };
+                  })(pg),
+                );
+
+                pager.appendChild(btn);
+                prev = pg;
+              });
             }
           }
 
