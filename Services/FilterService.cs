@@ -43,20 +43,32 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             {
                 filtered = filtered.Where(item =>
                     criteria.MissingImages.Any(img =>
-                        !item.SingularImages.GetValueOrDefault(img, false)
+                        // The item must support the image type, and have it marked as missing (false)
+                        item.SupportedImageTypes.Contains(img)
+                        && item.SingularImages.ContainsKey(img)
+                        && item.SingularImages[img] == false
                     )
                 );
             }
 
-            // Filter by backdrop count
+            // Filter by min backdrop count
             if (criteria.MinBackdrops.HasValue)
             {
-                filtered = filtered.Where(x => x.BackdropCount < criteria.MinBackdrops.Value);
+                // Only consider items that actually support backdrops
+                filtered = filtered.Where(x =>
+                    x.SupportedImageTypes.Contains("Backdrop")
+                    && x.BackdropCount < criteria.MinBackdrops.Value
+                );
             }
 
+            // Filter by max backdrop count
             if (criteria.MaxBackdrops.HasValue)
             {
-                filtered = filtered.Where(x => x.BackdropCount <= criteria.MaxBackdrops.Value);
+                // Only consider items that actually support backdrops
+                filtered = filtered.Where(x =>
+                    x.SupportedImageTypes.Contains("Backdrop")
+                    && x.BackdropCount <= criteria.MaxBackdrops.Value
+                );
             }
 
             // Filter by completion status
@@ -130,10 +142,13 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
 
                 totalBackdrops += item.BackdropCount;
 
-                // Count missing images
+                // Count missing images, but only if the item supports that image type
                 foreach (var imageType in imageTypes)
                 {
-                    if (!item.SingularImages.GetValueOrDefault(imageType, false))
+                    if (
+                        item.SupportedImageTypes.Contains(imageType)
+                        && !item.SingularImages.GetValueOrDefault(imageType, false)
+                    )
                     {
                         stats.MissingImageCounts[imageType]++;
                     }

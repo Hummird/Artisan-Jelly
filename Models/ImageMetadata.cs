@@ -13,18 +13,11 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public string ItemType { get; set; }
         public DateTime LastScanned { get; set; }
 
-        // Singular images: true if present, false if missing
-        public Dictionary<string, bool> SingularImages { get; set; } =
-            new()
-            {
-                { "Primary", false },
-                { "Clearart", false },
-                { "Banner", false },
-                { "BoxRear", false },
-                { "Disc", false },
-                { "Logo", false },
-                { "Thumb", false },
-            };
+        // Tracks what this specific item type actually supports
+        public HashSet<string> SupportedImageTypes { get; set; } = new();
+
+        // Removed the hardcoded default types. The scanner will populate this now.
+        public Dictionary<string, bool> SingularImages { get; set; } = new();
 
         public int BackdropCount { get; set; }
 
@@ -37,13 +30,25 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
                     presentCount++;
             }
 
+            int totalSingularSupported = SingularImages.Count;
+
+            // Avoid division by zero for items that support 0 singular images
+            double percentage =
+                totalSingularSupported > 0
+                    ? (presentCount / (double)totalSingularSupported) * 100
+                    : 100;
+
+            // If it supports backdrops, we expect at least 1
+            bool requiresBackdrop = SupportedImageTypes.Contains("Backdrop");
+            bool backdropsComplete = !requiresBackdrop || BackdropCount >= 1;
+
             return new CompletionStatus
             {
                 SingularImagesPresent = presentCount,
-                SingularImagesMissing = 7 - presentCount,
+                SingularImagesMissing = totalSingularSupported - presentCount,
                 BackdropCount = BackdropCount,
-                IsComplete = presentCount == 7 && BackdropCount >= 4,
-                CompletionPercentage = (presentCount / 7.0) * 100,
+                IsComplete = presentCount == totalSingularSupported && backdropsComplete,
+                CompletionPercentage = percentage,
             };
         }
     }

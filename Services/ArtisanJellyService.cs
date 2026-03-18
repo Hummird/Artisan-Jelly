@@ -84,25 +84,32 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
 
         private ItemImageStatus ScanItem(BaseItem item)
         {
+            var itemTypeStr = item.GetType().Name;
+            var supported = GetSupportedImageTypes(itemTypeStr);
+
             var status = new ItemImageStatus
             {
                 ItemId = item.Id.ToString(),
                 ItemName = item.Name,
-                // Dynamically use the item's underlying class name (e.g. "Movie", "Person", etc.)
-                ItemType = item.GetType().Name,
+                ItemType = itemTypeStr,
                 LastScanned = DateTime.UtcNow,
+                SupportedImageTypes = supported,
             };
 
-            // Use ImageInfos (always available on BaseItem) — no GetImagePath needed
             foreach (var kvp in ImageTypeMap)
             {
-                status.SingularImages[kvp.Key] =
-                    item.ImageInfos != null && item.ImageInfos.Any(img => img.Type == kvp.Value);
+                // Only add the key to the dictionary if this item type actually supports it
+                if (supported.Contains(kvp.Key))
+                {
+                    status.SingularImages[kvp.Key] =
+                        item.ImageInfos != null
+                        && item.ImageInfos.Any(img => img.Type == kvp.Value);
+                }
             }
 
-            // Count backdrops via ImageInfos
+            // Only count backdrops if this item type supports them
             status.BackdropCount =
-                item.ImageInfos != null
+                supported.Contains("Backdrop") && item.ImageInfos != null
                     ? item.ImageInfos.Count(img => img.Type == ImageType.Backdrop)
                     : 0;
 
@@ -115,5 +122,54 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         }
 
         public List<ItemImageStatus> GetCachedResults() => _scanCache;
+
+        private static HashSet<string> GetSupportedImageTypes(string itemType)
+        {
+            return itemType switch
+            {
+                "Movie" => new HashSet<string>
+                {
+                    "Primary",
+                    "Logo",
+                    "Backdrop",
+                    "Banner",
+                    "Thumb",
+                    "Clearart",
+                    "Disc",
+                    "BoxRear",
+                },
+                "Series" => new HashSet<string>
+                {
+                    "Primary",
+                    "Logo",
+                    "Backdrop",
+                    "Banner",
+                    "Thumb",
+                    "Clearart",
+                },
+                "Season" => new HashSet<string> { "Primary", "Backdrop", "Banner", "Thumb" },
+                "Episode" => new HashSet<string> { "Primary", "Backdrop", "Thumb" },
+                "MusicArtist" => new HashSet<string>
+                {
+                    "Primary",
+                    "Logo",
+                    "Backdrop",
+                    "Banner",
+                    "Thumb",
+                },
+                "MusicAlbum" => new HashSet<string> { "Primary", "Backdrop", "Disc", "Thumb" },
+                "Audio" => new HashSet<string> { "Primary", "Disc" }, // Songs don't use their own backdrops or logos
+                "Person" => new HashSet<string> { "Primary", "Backdrop", "Thumb" },
+                "BoxSet" => new HashSet<string>
+                {
+                    "Primary",
+                    "Logo",
+                    "Backdrop",
+                    "Banner",
+                    "Thumb",
+                },
+                _ => new HashSet<string> { "Primary", "Backdrop" }, // Safe fallback
+            };
+        }
     }
 }
