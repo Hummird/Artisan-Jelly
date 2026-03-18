@@ -1,4 +1,6 @@
-# Artisan Jelly
+<h1 align="center">
+  Artisan Jelly
+</h1>
 
 ![artisan-jelly-logo](https://github.com/user-attachments/assets/3f245886-2f76-42fb-8b1a-e4d7f11f6cee)
 
