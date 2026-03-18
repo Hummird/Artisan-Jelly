@@ -741,6 +741,7 @@
             "Disc",
             "BoxRear",
           ];
+
           var ALL_ITEM_TYPES = [
             "Movie",
             "Series",
@@ -766,21 +767,25 @@
           var modalImages = {}; // ImageType → {Width,Height,...}
           var searchType = null;
           var searchItemId = null;
+          var uploadTargetType = null;
 
           // ── Helpers ──────────────────────────────────────────────────────
 
           function apiUrl(p) {
             return ApiClient.getUrl("Plugins/ArtisanJelly/" + p);
           }
+
           function setStatus(m) {
             document.getElementById("divScanStatus").textContent = m;
           }
+
           function escHtml(s) {
             return String(s || "")
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;");
           }
+
           function getHiddenImages() {
             try {
               return JSON.parse(localStorage.getItem(STOR_KEY_IMG) || "[]");
@@ -788,9 +793,11 @@
               return [];
             }
           }
+
           function setHiddenImages(a) {
             localStorage.setItem(STOR_KEY_IMG, JSON.stringify(a));
           }
+
           function getVisibleImages() {
             var h = getHiddenImages();
             return ALL_IMAGE_TYPES.filter(function (t) {
@@ -825,11 +832,11 @@
             d.innerHTML =
               '<label class="checkboxContainer">' +
               '<input is="emby-checkbox" type="checkbox" class="' +
-              (extraClass || "") +
+              extraClass +
               '" value="' +
-              type +
-              '"' +
-              (checked ? " checked" : "") +
+              escHtml(type) +
+              '" ' +
+              (checked ? "checked" : "") +
               " />" +
               "<span>" +
               escHtml(type) +
@@ -841,6 +848,7 @@
           function buildIgnoredImageTypesGroup() {
             var hidden = getHiddenImages();
             var c = document.getElementById("grpIgnoredImageTypes");
+            if (!c) return;
 
             c.innerHTML = "";
             ALL_IMAGE_TYPES.forEach(function (type) {
@@ -849,6 +857,7 @@
                 "chkIgnoredImage",
                 hidden.indexOf(type) !== -1,
               );
+
               lbl
                 .querySelector("input")
                 .addEventListener("change", function (e) {
@@ -907,7 +916,10 @@
             var visible = getVisibleImages().filter(function (t) {
               return t !== "Backdrop";
             });
+
             var c = document.getElementById("grpMissing");
+            if (!c) return;
+
             c.innerHTML = "";
             visible.forEach(function (type) {
               c.appendChild(makeCheckbox(type, "chkMissing", false));
@@ -923,10 +935,13 @@
 
           function buildCriteria() {
             var missing = [];
+
             page.querySelectorAll(".chkMissing:checked").forEach(function (cb) {
               missing.push(cb.value);
             });
+
             var bd = document.getElementById("numBackdrops").value;
+
             return {
               titleFilter: document
                 .getElementById("txtTitleFilter")
@@ -956,7 +971,8 @@
             var hidden = getHiddenImages();
 
             document.getElementById("spanResultCount").textContent =
-              "(" + data.TotalCount + " items)";
+              (data.TotalCount || 0) + " items";
+
             section.style.display = "";
             list.innerHTML = "";
 
@@ -972,7 +988,9 @@
               var imgs = item.SingularImages || {};
 
               Object.keys(imgs).forEach(function (k) {
-                if (!imgs[k] && hidden.indexOf(k) === -1) missing.push(k);
+                if (!imgs[k] && hidden.indexOf(k) === -1) {
+                  missing.push(k);
+                }
               });
 
               // Check the currently applied backdrop threshold, default to fewer than 1
@@ -987,7 +1005,7 @@
 
               if (
                 hidden.indexOf("Backdrop") === -1 &&
-                item.BackdropCount < bdTarget
+                (item.BackdropCount || 0) < bdTarget
               ) {
                 missing.push("Backdrop");
               }
@@ -1054,7 +1072,8 @@
             });
 
             pager.innerHTML = "";
-            var totalPages = Math.ceil(data.TotalCount / 50);
+            var totalPages = Math.ceil((data.TotalCount || 0) / 50);
+
             if (totalPages > 1) {
               for (var p = 1; p <= totalPages; p++) {
                 (function (pg) {
@@ -1062,8 +1081,8 @@
                   btn.setAttribute("is", "emby-button");
                   btn.type = "button";
                   btn.className =
-                    "emby-button" +
-                    (pg === currentPage ? " raised" : " lightbtn");
+                    "emby-button " +
+                    (pg === currentPage ? "raised" : "lightbtn");
                   btn.textContent = pg;
                   btn.addEventListener("click", function () {
                     currentPage = pg;
@@ -1086,6 +1105,7 @@
             "Disc",
             "BoxRear",
           ];
+
           var LANDSCAPE_TYPES = ["Banner", "Thumb", "Art"];
 
           function isLandscape(type) {
@@ -1096,6 +1116,7 @@
             modalItemId = itemId;
             modalItemName = itemName;
             modalImages = {};
+
             document.getElementById("modalTitle").textContent = itemName;
             document.getElementById("modalBody").innerHTML =
               '<p style="opacity:0.5;font-size:0.85em;">Loading…</p>';
@@ -1108,7 +1129,8 @@
               dataType: "json",
             })
               .then(function (images) {
-                images.forEach(function (img) {
+                modalImages = {};
+                (images || []).forEach(function (img) {
                   var key = img.ImageType;
                   if (!modalImages[key]) modalImages[key] = [];
                   modalImages[key].push(img);
@@ -1124,16 +1146,18 @@
             var body = document.getElementById("modalBody");
             body.innerHTML = "";
 
-            // Section: singular images
+            // Singular images
             var singSection = document.createElement("div");
             singSection.innerHTML =
               '<h2 class="sectionTitle" style="margin:0 0 0.8em;">Images</h2>';
+
             var singGrid = document.createElement("div");
             singGrid.className = "aj-img-grid";
 
             SINGULAR_TYPES.forEach(function (type) {
               var landscape = isLandscape(type);
               var imgs = modalImages[type] || [];
+
               if (imgs.length > 0) {
                 imgs.forEach(function (imgInfo) {
                   singGrid.appendChild(makeImageCard(imgInfo, type, landscape));
@@ -1142,13 +1166,15 @@
                 singGrid.appendChild(makeAddCard(type, landscape));
               }
             });
+
             singSection.appendChild(singGrid);
             body.appendChild(singSection);
 
-            // Section: backdrops
+            // Backdrops
             var bdSection = document.createElement("div");
             bdSection.innerHTML =
               '<h2 class="sectionTitle" style="margin:0.5em 0 0.8em;">Backdrops</h2>';
+
             var bdGrid = document.createElement("div");
             bdGrid.className = "aj-img-grid";
 
@@ -1157,6 +1183,7 @@
               bdGrid.appendChild(makeImageCard(imgInfo, "Backdrop", true));
             });
             bdGrid.appendChild(makeAddCard("Backdrop", true));
+
             bdSection.appendChild(bdGrid);
             body.appendChild(bdSection);
           }
@@ -1171,6 +1198,7 @@
               imgInfo.ImageIndex != null
                 ? type + "/" + imgInfo.ImageIndex
                 : type;
+
             var imgUrl = ApiClient.getUrl(
               "Items/" + modalItemId + "/Images/" + imgPath,
               {
@@ -1237,6 +1265,7 @@
             card.className =
               "aj-add-card " + (landscape ? "landscape" : "portrait");
             if (type === "Backdrop") card.style.width = "180px";
+
             card.innerHTML =
               '<div class="aj-add-card-icon"><span class="material-icons add"></span></div><div>' +
               type +
@@ -1245,6 +1274,7 @@
             card.addEventListener("click", function () {
               openSearchModal(type, true);
             });
+
             return card;
           }
 
@@ -1258,18 +1288,20 @@
           function openSearchModal(type, includeUpload) {
             searchType = type;
             searchItemId = modalItemId;
+
             document.getElementById("searchTitle").textContent =
               "Search — " + type;
             document.getElementById("ajSearchGrid").innerHTML = "";
             document.getElementById("searchStatus").textContent = "Searching…";
-            document.getElementById("uploadHint").textContent = "";
+            document.getElementById("uploadHint").textContent = includeUpload
+              ? "Upload a local image for this type."
+              : "";
 
             var landscape = isLandscape(type) || type === "Backdrop";
             document.getElementById("ajSearchGrid").className =
               "aj-search-grid" + (landscape ? " landscape" : "");
 
             document.getElementById("ajSearchOverlay").classList.add("open");
-
             doImageSearch(type, landscape);
           }
 
@@ -1284,7 +1316,7 @@
               dataType: "json",
             })
               .then(function (data) {
-                var images = data.Images || [];
+                var images = (data && data.Images) || [];
                 var grid = document.getElementById("ajSearchGrid");
                 grid.innerHTML = "";
                 document.getElementById("searchStatus").textContent =
@@ -1294,6 +1326,7 @@
                   var cell = document.createElement("div");
                   cell.className =
                     "aj-search-item " + (landscape ? "landscape" : "portrait");
+
                   var el = document.createElement("img");
                   el.src = img.ThumbnailUrl || img.Url;
                   el.alt = "";
@@ -1301,6 +1334,7 @@
                   el.onerror = function () {
                     cell.style.display = "none";
                   };
+
                   var info = document.createElement("div");
                   info.className = "aj-si-info";
                   info.textContent =
@@ -1313,6 +1347,7 @@
                   cell.addEventListener("click", function () {
                     applyRemoteImage(img.Url, type);
                   });
+
                   grid.appendChild(cell);
                 });
               })
@@ -1328,6 +1363,7 @@
 
           function applyRemoteImage(url, type) {
             document.getElementById("searchStatus").textContent = "Applying…";
+
             ApiClient.ajax({
               type: "POST",
               url: ApiClient.getUrl(
@@ -1349,14 +1385,13 @@
               .catch(function (err) {
                 document.getElementById("searchStatus").textContent =
                   "Failed: " +
-                  (err.status || err.statusText || "unknown error");
+                  (err && err.status
+                    ? err.status + " " + (err.statusText || "")
+                    : "unknown error");
               });
           }
 
           // ── Upload file ───────────────────────────────────────────────────
-
-          var uploadTargetType = null;
-
           function triggerUpload(type) {
             uploadTargetType = type;
             var input = document.getElementById("fileUpload");
@@ -1369,16 +1404,14 @@
             .addEventListener("change", function (e) {
               var file = e.target.files[0];
               var typeToUse = uploadTargetType || searchType;
-
               if (!file || !typeToUse) return;
 
               var hint = document.getElementById("uploadHint");
               if (!hint) hint = { textContent: "" };
 
-              hint.textContent = "Uploading " + typeToUse + "...";
+              hint.textContent = "Uploading " + typeToUse + "…";
 
               var reader = new FileReader();
-
               reader.onload = function (ev) {
                 // Get the base64 string and strip the "data:image/jpeg;base64," prefix
                 var base64String = ev.target.result.split(",")[1];
@@ -1407,7 +1440,9 @@
                   .catch(function (err) {
                     hint.textContent =
                       "Upload failed: " +
-                      (err.status || err.statusText || "error");
+                      (err && err.status
+                        ? err.status + " " + (err.statusText || "")
+                        : "error");
                     uploadTargetType = null;
                   });
               };
@@ -1444,14 +1479,17 @@
           document
             .getElementById("btnModalClose")
             .addEventListener("click", closeEditModal);
+
           document
             .getElementById("btnSearchClose")
             .addEventListener("click", closeSearchModal);
+
           document
             .getElementById("ajModalOverlay")
             .addEventListener("click", function (e) {
               if (e.target === this) closeEditModal();
             });
+
           document
             .getElementById("ajSearchOverlay")
             .addEventListener("click", function (e) {
@@ -1462,6 +1500,7 @@
 
           function loadFilter(criteria, pg) {
             Dashboard.showLoadingMsg();
+
             ApiClient.ajax({
               type: "POST",
               url: apiUrl("Filter"),
@@ -1539,9 +1578,11 @@
               document.getElementById("txtTitleFilter").value = "";
               document.getElementById("selectItemType").value = "All";
               document.getElementById("numBackdrops").value = "";
+
               page.querySelectorAll(".chkMissing").forEach(function (cb) {
                 cb.checked = false;
               });
+
               currentCriteria = {};
               currentPage = 1;
               loadFilter({}, 1);
@@ -1551,6 +1592,7 @@
             buildIgnoredImageTypesGroup();
             buildIgnoredItemTypesGroup();
             buildMissingGroup();
+
             ApiClient.ajax({
               type: "GET",
               url: apiUrl("Results"),
