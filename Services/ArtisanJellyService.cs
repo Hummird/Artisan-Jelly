@@ -148,7 +148,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                     "Clearart",
                 },
                 "Season" => new HashSet<string> { "Primary", "Backdrop", "Banner", "Thumb" },
-                "Episode" => new HashSet<string> { "Primary", "Backdrop", "Thumb" },
+                "Episode" => new HashSet<string> { "Primary", "Thumb" },
                 "MusicArtist" => new HashSet<string>
                 {
                     "Primary",
@@ -157,9 +157,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                     "Banner",
                     "Thumb",
                 },
-                "MusicAlbum" => new HashSet<string> { "Primary", "Backdrop", "Disc", "Thumb" },
-                "Audio" => new HashSet<string> { "Primary", "Disc" }, // Songs don't use their own backdrops or logos
-                "Person" => new HashSet<string> { "Primary", "Backdrop", "Thumb" },
+                "MusicAlbum" => new HashSet<string> { "Primary", "Disc" },
+                "Audio" => new HashSet<string> { "Primary" },
+                "Person" => new HashSet<string> { "Primary", "Backdrop" },
                 "BoxSet" => new HashSet<string>
                 {
                     "Primary",
