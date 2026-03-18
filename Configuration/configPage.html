@@ -861,8 +861,23 @@
               Object.keys(imgs).forEach(function (k) {
                 if (!imgs[k] && hidden.indexOf(k) === -1) missing.push(k);
               });
-              if (hidden.indexOf("Backdrop") === -1 && item.BackdropCount === 0)
+
+              // Check the currently applied backdrop threshold, default to fewer than 1
+              var bdTarget = 1;
+              if (
+                typeof currentCriteria !== "undefined" &&
+                currentCriteria.maxBackdrops !== null &&
+                currentCriteria.maxBackdrops !== undefined
+              ) {
+                bdTarget = currentCriteria.maxBackdrops + 1;
+              }
+
+              if (
+                hidden.indexOf("Backdrop") === -1 &&
+                item.BackdropCount < bdTarget
+              ) {
                 missing.push("Backdrop");
+              }
 
               var pillsHtml = missing.length
                 ? missing
