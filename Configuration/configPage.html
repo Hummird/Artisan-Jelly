@@ -25,6 +25,11 @@
           color: #202020;
         }
 
+        fieldset {
+          border-color: gray;
+          margin: 0.5rem 0;
+        }
+
         /* Checkbox group layout */
         .aj-cbgroup {
           display: flex;
@@ -475,7 +480,7 @@
             </summary>
 
             <fieldset>
-              <legend>Image Types</legend>
+              <legend>Hide these Image Types</legend>
               <div class="aj-cbgroup" id="grpIgnoredImageTypes"></div>
 
               <details class="aj-ignored-box">
@@ -526,7 +531,7 @@
             </fieldset>
 
             <fieldset>
-              <legend>Item Types</legend>
+              <legend>Hide these Item Types</legend>
               <div class="aj-cbgroup" id="grpIgnoredItemTypes"></div>
 
               <details class="aj-ignored-box">
@@ -1381,7 +1386,7 @@
             searchItemId = modalItemId;
 
             document.getElementById("searchTitle").textContent =
-              "Search — " + type;
+              "Search: " + type;
             document.getElementById("ajSearchGrid").innerHTML = "";
             document.getElementById("searchStatus").textContent = "Searching…";
             document.getElementById("uploadHint").textContent = includeUpload
