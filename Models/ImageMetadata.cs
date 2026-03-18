@@ -77,6 +77,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public string TitleFilter { get; set; }
         public string ItemType { get; set; }
         public bool? IsComplete { get; set; }
+
+        // What to ignore
+        public string[] IgnoredItemTypes { get; set; }
     }
 
     /// <summary>

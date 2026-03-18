@@ -27,6 +27,17 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             {
                 filtered = filtered.Where(x => x.ItemType == criteria.ItemType);
             }
+            else if (criteria.IgnoredItemTypes != null && criteria.IgnoredItemTypes.Any())
+            {
+                // "All" is selected, so we return everything except the ignored item types
+                var ignoredItems = new HashSet<string>(
+                    criteria.IgnoredItemTypes,
+                    StringComparer.OrdinalIgnoreCase
+                );
+                filtered = filtered.Where(x =>
+                    x.ItemType != null && !ignoredItems.Contains(x.ItemType)
+                );
+            }
 
             // Filter by title
             if (!string.IsNullOrEmpty(criteria.TitleFilter))
