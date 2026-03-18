@@ -53,85 +53,92 @@ The interface lets you fix missing images directly without leaving the plugin pa
 
 ---
 
-## API Documentation
+## API Reference
 
-The plugin exposes several endpoints under the `/Plugins/ArtisanJelly` route.  
-All endpoints (except the initial login) require an active Jellyfin API token.
-
-### 1. Authentication
-
-Before interacting with the plugin, you must authenticate with Jellyfin to get an Access Token.
-Jellyfin strictly requires the `X-Emby-Authorization` header with specific client details to prevent `400 Bad Request` or `401 Unauthorized` errors.
-
-**Request:**
-
-```bash
-curl -X POST "http://localhost:8096/Users/AuthenticateByName" \
-  -H "Content-Type: application/json" \
-  -H 'X-Emby-Authorization: MediaBrowser Client="API Script", Device="Script", DeviceId="123", Version="1.0"' \
-  -d '{"Username": "admin", "Pw": "your_password"}'
-```
-
-**Response:**
-Extract the `AccessToken` from the JSON response. For all subsequent requests, pass this token in the header as:
+All endpoints are prefixed with `/Plugins/ArtisanJelly` and require a Jellyfin token header:
 `Authorization: MediaBrowser Token="YOUR_ACCESS_TOKEN"`
 
-### 2. Plugin Endpoints
+### Authenticate
 
-#### Trigger Library Scan
-
-Scans the Jellyfin library for image and metadata status.
-
-```bash
-curl -X POST "http://localhost:8096/Plugins/ArtisanJelly/Scan?forceRefresh=true" \
-  -H "Authorization: MediaBrowser Token=\"YOUR_ACCESS_TOKEN\""
+```http
+POST /Users/AuthenticateByName
 ```
 
-#### Fetch Library Statistics
+| Header                 | Value                                                                          |
+| :--------------------- | :----------------------------------------------------------------------------- |
+| `X-Emby-Authorization` | `MediaBrowser Client="Script", Device="Script", DeviceId="123", Version="1.0"` |
+| `Content-Type`         | `application/json`                                                             |
 
-Returns aggregated data about the scanned items (e.g., total items scanned).
-
-```bash
-curl -X GET "http://localhost:8096/Plugins/ArtisanJelly/Statistics" \
-  -H "Authorization: MediaBrowser Token=\"YOUR_ACCESS_TOKEN\""
+```json
+{ "Username": "admin", "Pw": "your_password" }
 ```
 
-#### Get All Cached Results
+Extract `AccessToken` from the response and use it in all subsequent requests.
 
-Retrieves the complete list of scanned items from the plugin's cache.
+### Trigger Library Scan
 
-```bash
-curl -X GET "http://localhost:8096/Plugins/ArtisanJelly/Results" \
-  -H "Authorization: MediaBrowser Token=\"YOUR_ACCESS_TOKEN\""
+```http
+POST /Plugins/ArtisanJelly/Scan
 ```
 
-#### Filter Scanned Items
+| Parameter      | Type   | Description                                            |
+| :------------- | :----- | :----------------------------------------------------- |
+| `forceRefresh` | `bool` | If `true`, discards cache and rescans the full library |
 
-Allows complex querying of the scanned library based on missing images, item types, or backdrop counts. Requires a JSON payload.
+### Get Library Statistics
 
-**Request:**
-
-```bash
-curl -X POST "http://localhost:8096/Plugins/ArtisanJelly/Filter" \
-  -H "Authorization: MediaBrowser Token=\"YOUR_ACCESS_TOKEN\"" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "criteria": {
-      "itemType": "Movie",
-      "missingImages": ["Logo"],
-      "maxBackdrops": 0,
-      "titleFilter": "Matrix"
-    },
-    "pageNumber": 1,
-    "pageSize": 50
-  }'
+```http
+GET /Plugins/ArtisanJelly/Statistics
 ```
 
-#### Get Single Item Status
+Returns aggregated counts — total items scanned, missing image counts per type, available item types, and backdrop averages. No parameters.
 
-Fetch detailed image and metadata status for a specific Jellyfin Item ID.
+### Get Cached Results
 
-```bash
-curl -X GET "http://localhost:8096/Plugins/ArtisanJelly/Item/{itemId}" \
-  -H "Authorization: MediaBrowser Token=\"YOUR_ACCESS_TOKEN\""
+```http
+GET /Plugins/ArtisanJelly/Results
 ```
+
+Returns the raw full list from the last scan without any filtering or pagination. No parameters.
+
+### Filter Items
+
+```http
+POST /Plugins/ArtisanJelly/Filter
+```
+
+| Body field                  | Type       | Description                                                        |
+| :-------------------------- | :--------- | :----------------------------------------------------------------- |
+| `criteria.titleFilter`      | `string`   | Case-insensitive substring match on item name                      |
+| `criteria.itemType`         | `string`   | `"All"`, `"Movie"`, `"Series"`, `"Episode"`, etc.                  |
+| `criteria.missingImages`    | `string[]` | Only return items missing these image types e.g. `["Logo","Disc"]` |
+| `criteria.maxBackdrops`     | `int`      | Return items with a backdrop count at or below this value          |
+| `criteria.ignoredItemTypes` | `string[]` | Exclude these item types when `itemType` is `"All"`                |
+| `pageNumber`                | `int`      | **Required**. 1-based page index                                   |
+| `pageSize`                  | `int`      | **Required**. Items per page (recommended: `50`)                   |
+
+```json
+{
+  "criteria": {
+    "itemType": "All",
+    "missingImages": ["Logo"],
+    "maxBackdrops": 0,
+    "titleFilter": "Matrix",
+    "ignoredItemTypes": ["Episode", "Season"]
+  },
+  "pageNumber": 1,
+  "pageSize": 50
+}
+```
+
+Response includes `TotalCount` (for pagination), `PageNumber`, `PageSize`, and `Items`.
+
+### Get Single Item Status
+
+```http
+GET /Plugins/ArtisanJelly/Item/{itemId}
+```
+
+| Parameter | Type     | Description                          |
+| :-------- | :------- | :----------------------------------- |
+| `itemId`  | `string` | **Required**. The Jellyfin item GUID |
