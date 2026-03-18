@@ -47,6 +47,7 @@
             letter-spacing: 0.06em;
             opacity: 0.45;
             margin-bottom: 0.3em;
+            cursor: pointer;
           }
         }
 
@@ -956,7 +957,8 @@
                   btn.setAttribute("is", "emby-button");
                   btn.type = "button";
                   btn.className =
-                    "emby-button" + (pg === currentPage ? " raised" : "");
+                    "emby-button" +
+                    (pg === currentPage ? " raised" : " lightbtn");
                   btn.textContent = pg;
                   btn.addEventListener("click", function () {
                     currentPage = pg;
