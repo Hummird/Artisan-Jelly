@@ -12,36 +12,38 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public string ItemName { get; set; }
         public string ItemType { get; set; } // "Movie" or "Series"
         public DateTime LastScanned { get; set; }
-        
+
         // Singular images: true if present, false if missing
-        public Dictionary<string, bool> SingularImages { get; set; } = new()
-        {
-            { "Primary", false },
-            { "Clearart", false },
-            { "Banner", false },
-            { "BoxRear", false },
-            { "Disc", false },
-            { "Logo", false },
-            { "Thumb", false }
-        };
-        
+        public Dictionary<string, bool> SingularImages { get; set; } =
+            new()
+            {
+                { "Primary", false },
+                { "Clearart", false },
+                { "Banner", false },
+                { "BoxRear", false },
+                { "Disc", false },
+                { "Logo", false },
+                { "Thumb", false },
+            };
+
         public int BackdropCount { get; set; }
-        
+
         public CompletionStatus GetCompletionStatus()
         {
             int presentCount = 0;
             foreach (var image in SingularImages.Values)
             {
-                if (image) presentCount++;
+                if (image)
+                    presentCount++;
             }
-            
+
             return new CompletionStatus
             {
                 SingularImagesPresent = presentCount,
                 SingularImagesMissing = 7 - presentCount,
                 BackdropCount = BackdropCount,
                 IsComplete = presentCount == 7 && BackdropCount >= 4,
-                CompletionPercentage = (presentCount / 7.0) * 100
+                CompletionPercentage = (presentCount / 7.0) * 100,
             };
         }
     }
@@ -62,7 +64,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
     {
         public string Name { get; set; }
         public string CreatedDate { get; set; }
-        
+
         // What to search for
         public List<string> MissingImages { get; set; } = new();
         public int? MinBackdrops { get; set; }
@@ -109,4 +111,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Models
         public Dictionary<string, int> MissingImageCounts { get; set; }
     }
 }
-

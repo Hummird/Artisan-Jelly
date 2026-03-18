@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using MediaBrowser.Common.Configuration;
 using Jellyfin.Plugin.ArtisanJelly.Models;
+using MediaBrowser.Common.Configuration;
 
 namespace Jellyfin.Plugin.ArtisanJelly.Services
 {
@@ -36,7 +36,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                 try
                 {
                     var json = File.ReadAllText(_searchFile);
-                    _searches = JsonSerializer.Deserialize<List<SavedSearch>>(json) ?? new List<SavedSearch>();
+                    _searches =
+                        JsonSerializer.Deserialize<List<SavedSearch>>(json)
+                        ?? new List<SavedSearch>();
                 }
                 catch
                 {
@@ -54,7 +56,10 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         /// </summary>
         private void SaveSearches()
         {
-            var json = JsonSerializer.Serialize(_searches, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(
+                _searches,
+                new JsonSerializerOptions { WriteIndented = true }
+            );
             File.WriteAllText(_searchFile, json);
         }
 
@@ -70,7 +75,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                 Description = description,
                 Criteria = criteria,
                 CreatedDate = DateTime.UtcNow,
-                ResultCount = 0
+                ResultCount = 0,
             };
 
             _searches.Add(search);
@@ -125,4 +130,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         }
     }
 }
-

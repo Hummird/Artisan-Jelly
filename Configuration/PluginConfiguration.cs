@@ -1,5 +1,5 @@
-using MediaBrowser.Model.Plugins;
 using System;
+using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.ArtisanJelly.Configuration
 {
@@ -53,4 +53,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Configuration
         public string BadgeStyle { get; set; } = "Percentage";
     }
 }
-

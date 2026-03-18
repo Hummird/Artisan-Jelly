@@ -13,7 +13,12 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         /// <summary>
         /// Apply filters to scan results
         /// </summary>
-        public FilterResult ApplyFilters(List<ItemImageStatus> items, FilterCriteria criteria, int pageNumber = 1, int pageSize = 50)
+        public FilterResult ApplyFilters(
+            List<ItemImageStatus> items,
+            FilterCriteria criteria,
+            int pageNumber = 1,
+            int pageSize = 50
+        )
         {
             var filtered = items.AsEnumerable();
 
@@ -34,7 +39,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             if (criteria.MissingImages?.Count > 0)
             {
                 filtered = filtered.Where(item =>
-                    criteria.MissingImages.Any(img => !item.SingularImages.GetValueOrDefault(img, false))
+                    criteria.MissingImages.Any(img =>
+                        !item.SingularImages.GetValueOrDefault(img, false)
+                    )
                 );
             }
 
@@ -52,7 +59,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             // Filter by completion status
             if (criteria.IsComplete.HasValue)
             {
-                filtered = filtered.Where(x => x.GetCompletionStatus().IsComplete == criteria.IsComplete.Value);
+                filtered = filtered.Where(x =>
+                    x.GetCompletionStatus().IsComplete == criteria.IsComplete.Value
+                );
             }
 
             var totalCount = filtered.Count();
@@ -64,7 +73,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
                 Items = pagedItems,
                 TotalCount = totalCount,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
             };
         }
 
@@ -77,14 +86,23 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             {
                 LastScanTime = DateTime.UtcNow,
                 TotalItemsScanned = items.Count,
-                MissingImageCounts = new()
+                MissingImageCounts = new(),
             };
 
             var completeCount = 0;
             var missingCount = 0;
             int totalBackdrops = 0;
 
-            var imageTypes = new[] { "Primary", "Clearart", "Banner", "BoxRear", "Disc", "Logo", "Thumb" };
+            var imageTypes = new[]
+            {
+                "Primary",
+                "Clearart",
+                "Banner",
+                "BoxRear",
+                "Disc",
+                "Logo",
+                "Thumb",
+            };
             foreach (var imageType in imageTypes)
             {
                 stats.MissingImageCounts[imageType] = 0;
@@ -93,7 +111,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             foreach (var item in items)
             {
                 var completion = item.GetCompletionStatus();
-                
+
                 if (completion.IsComplete)
                     completeCount++;
                 else
@@ -119,4 +137,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         }
     }
 }
-

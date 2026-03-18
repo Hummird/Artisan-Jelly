@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.ArtisanJelly.Models;
+using Jellyfin.Plugin.ArtisanJelly.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.ArtisanJelly.Models;
-using Jellyfin.Plugin.ArtisanJelly.Services;
 
 namespace Jellyfin.Plugin.ArtisanJelly.Controllers
 {
@@ -20,20 +20,22 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
         private readonly ILogger<ArtisanJellyController> _logger;
 
         public ArtisanJellyController(
-    ArtisanJellyService scannerService,
-    FilterService filterService,
-    SearchManager searchManager,
-    ILogger<ArtisanJellyController> logger)
-{
-    _scannerService = scannerService;
-    _filterService  = filterService;
-    _searchManager  = searchManager;
-    _logger         = logger;
-}
-
+            ArtisanJellyService scannerService,
+            FilterService filterService,
+            SearchManager searchManager,
+            ILogger<ArtisanJellyController> logger
+        )
+        {
+            _scannerService = scannerService;
+            _filterService = filterService;
+            _searchManager = searchManager;
+            _logger = logger;
+        }
 
         [HttpPost("Scan")]
-        public async Task<ActionResult<List<ItemImageStatus>>> ScanLibrary([FromQuery] bool forceRefresh = false)
+        public async Task<ActionResult<List<ItemImageStatus>>> ScanLibrary(
+            [FromQuery] bool forceRefresh = false
+        )
         {
             try
             {
@@ -48,16 +50,21 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
         }
 
         [HttpGet("Results")]
-        public ActionResult<List<ItemImageStatus>> GetResults()
-            => Ok(_scannerService.GetCachedResults());
+        public ActionResult<List<ItemImageStatus>> GetResults() =>
+            Ok(_scannerService.GetCachedResults());
 
         [HttpPost("Filter")]
         public ActionResult<FilterResult> ApplyFilter([FromBody] FilterRequest request)
         {
             try
             {
-                var items  = _scannerService.GetCachedResults();
-                var result = _filterService.ApplyFilters(items, request.Criteria, request.PageNumber, request.PageSize);
+                var items = _scannerService.GetCachedResults();
+                var result = _filterService.ApplyFilters(
+                    items,
+                    request.Criteria,
+                    request.PageNumber,
+                    request.PageSize
+                );
 
                 if (!string.IsNullOrEmpty(request.SearchId))
                     _searchManager.UpdateSearchResultCount(request.SearchId, result.TotalCount);
@@ -83,7 +90,9 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
         {
             try
             {
-                return Ok(_searchManager.CreateSearch(request.Name, request.Description, request.Criteria));
+                return Ok(
+                    _searchManager.CreateSearch(request.Name, request.Description, request.Criteria)
+                );
             }
             catch (Exception ex)
             {
@@ -93,8 +102,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
         }
 
         [HttpGet("Searches")]
-        public ActionResult<List<SavedSearch>> GetSearches()
-            => Ok(_searchManager.GetAllSearches());
+        public ActionResult<List<SavedSearch>> GetSearches() => Ok(_searchManager.GetAllSearches());
 
         [HttpDelete("Search/{id}")]
         public ActionResult DeleteSearch(string id)
@@ -126,9 +134,12 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
             try
             {
                 var assembly = typeof(Plugin).Assembly;
-                using var stream = assembly.GetManifestResourceStream("Jellyfin.Plugin.ArtisanJelly.Web.imagescanner.html");
-                if (stream == null) return NotFound("UI resource not found in assembly.");
-                
+                using var stream = assembly.GetManifestResourceStream(
+                    "Jellyfin.Plugin.ArtisanJelly.Web.imagescanner.html"
+                );
+                if (stream == null)
+                    return NotFound("UI resource not found in assembly.");
+
                 using var reader = new System.IO.StreamReader(stream);
                 return Content(reader.ReadToEnd(), "text/html");
             }
@@ -137,7 +148,6 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
     }
 
     public class FilterRequest
@@ -155,4 +165,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Controllers
         public FilterCriteria Criteria { get; set; }
     }
 }
-

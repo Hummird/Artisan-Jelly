@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
+using Jellyfin.Plugin.ArtisanJelly.Models;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
@@ -10,7 +11,6 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.ArtisanJelly.Models;
 
 namespace Jellyfin.Plugin.ArtisanJelly.Services
 {
@@ -24,16 +24,19 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         // Maps friendly display names -> actual Jellyfin ImageType enum values
         private static readonly Dictionary<string, ImageType> ImageTypeMap = new()
         {
-            { "Primary",  ImageType.Primary  },
-            { "Clearart", ImageType.Art       },
-            { "Banner",   ImageType.Banner    },
-            { "BoxRear",  ImageType.BoxRear   },
-            { "Disc",     ImageType.Disc      },
-            { "Logo",     ImageType.Logo      },
-            { "Thumb",    ImageType.Thumb     }
+            { "Primary", ImageType.Primary },
+            { "Clearart", ImageType.Art },
+            { "Banner", ImageType.Banner },
+            { "BoxRear", ImageType.BoxRear },
+            { "Disc", ImageType.Disc },
+            { "Logo", ImageType.Logo },
+            { "Thumb", ImageType.Thumb },
         };
 
-        public ArtisanJellyService(ILibraryManager libraryManager, ILogger<ArtisanJellyService> logger)
+        public ArtisanJellyService(
+            ILibraryManager libraryManager,
+            ILogger<ArtisanJellyService> logger
+        )
         {
             _libraryManager = libraryManager;
             _logger = logger;
@@ -54,7 +57,7 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
             {
                 Recursive = true,
                 // Use BaseItemKind enum — NOT strings
-                IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series }
+                IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
             };
 
             var queryResult = _libraryManager.GetItemsResult(query);
@@ -75,24 +78,24 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         {
             var status = new ItemImageStatus
             {
-                ItemId   = item.Id.ToString(),
+                ItemId = item.Id.ToString(),
                 ItemName = item.Name,
                 ItemType = item is Movie ? "Movie" : "Series",
-                LastScanned = DateTime.UtcNow
+                LastScanned = DateTime.UtcNow,
             };
 
             // Use ImageInfos (always available on BaseItem) — no GetImagePath needed
             foreach (var kvp in ImageTypeMap)
             {
                 status.SingularImages[kvp.Key] =
-                    item.ImageInfos != null &&
-                    item.ImageInfos.Any(img => img.Type == kvp.Value);
+                    item.ImageInfos != null && item.ImageInfos.Any(img => img.Type == kvp.Value);
             }
 
             // Count backdrops via ImageInfos
-            status.BackdropCount = item.ImageInfos != null
-                ? item.ImageInfos.Count(img => img.Type == ImageType.Backdrop)
-                : 0;
+            status.BackdropCount =
+                item.ImageInfos != null
+                    ? item.ImageInfos.Count(img => img.Type == ImageType.Backdrop)
+                    : 0;
 
             return status;
         }
@@ -105,4 +108,3 @@ namespace Jellyfin.Plugin.ArtisanJelly.Services
         public List<ItemImageStatus> GetCachedResults() => _scanCache;
     }
 }
-
