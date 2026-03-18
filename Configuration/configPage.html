@@ -1080,7 +1080,7 @@
               btn.className = "aj-edit-btn";
               btn.textContent = "Edit Images";
               btn.addEventListener("click", function () {
-                openEditModal(item.ItemId, item.ItemName);
+                openEditModal(item.ItemId, item.ItemName, item.ItemType);
               });
               row.appendChild(btn);
 
@@ -1469,7 +1469,7 @@
                   '<span class="material-icons check" style="vertical-align: middle;"></span> Applied!';
                 setTimeout(function () {
                   closeSearchModal();
-                  openEditModal(modalItemId, modalItemName);
+                  openEditModal(modalItemId, modalItemName, modalItemType);
                 }, 800);
               })
               .catch(function (err) {
@@ -1524,7 +1524,7 @@
 
                     setTimeout(function () {
                       closeSearchModal();
-                      openEditModal(modalItemId, modalItemName);
+                      openEditModal(modalItemId, modalItemName, modalItemType);
                     }, 800);
                   })
                   .catch(function (err) {
@@ -1557,7 +1557,7 @@
 
             ApiClient.ajax({ type: "DELETE", url: url })
               .then(function () {
-                openEditModal(modalItemId, modalItemName);
+                openEditModal(modalItemId, modalItemName, modalItemType);
               })
               .catch(function (err) {
                 Dashboard.alert({ message: "Delete failed." });
