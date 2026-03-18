@@ -8,9 +8,10 @@ An Jellyfin toolkit designed to audit your media library, uncover missing artwor
 
 ## Installation
 
-1. Add `https://hummird.online/jellyfin/manifest.json` into your jellyfin `/web/#/dashboard/plugins/repositories`
-2. Find Artisan Jelly in your availible plugins
-3. Install it.
+1. Add `https://hummird.online/jellyfin/manifest.json` to your jellyfin  
+   `Dashboard > Plugins > Repositories`
+3. Find Artisan Jelly in your availible plugins and install it.
+4. Restart your Jellyfin server.
 
 OR
 
