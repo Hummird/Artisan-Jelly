@@ -764,6 +764,7 @@
           // Modal state
           var modalItemId = null;
           var modalItemName = null;
+          var modalItemType = null;
           var modalImages = {}; // ImageType → {Width,Height,...}
           var searchType = null;
           var searchItemId = null;
@@ -1135,25 +1136,55 @@
 
           // ── Edit Images Modal ──────────────────────────────────────────────
 
-          var SINGULAR_TYPES = [
-            "Primary",
-            "Logo",
-            "Art",
-            "Banner",
-            "Thumb",
-            "Disc",
-            "BoxRear",
-          ];
-
           var LANDSCAPE_TYPES = ["Banner", "Thumb", "Art"];
 
           function isLandscape(type) {
             return LANDSCAPE_TYPES.indexOf(type) !== -1;
           }
 
-          function openEditModal(itemId, itemName) {
+          // Mirrors GetSupportedImageTypes in CS — keep in sync
+          var SUPPORTED_IMAGE_TYPES = {
+            Movie: [
+              "Primary",
+              "Logo",
+              "Backdrop",
+              "Banner",
+              "Thumb",
+              "Art",
+              "Disc",
+              "BoxRear",
+            ],
+            Series: ["Primary", "Logo", "Backdrop", "Banner", "Thumb", "Art"],
+            Season: ["Primary", "Backdrop", "Banner", "Thumb"],
+            Episode: ["Primary", "Thumb"],
+            MusicArtist: ["Primary", "Logo", "Backdrop", "Banner", "Thumb"],
+            MusicAlbum: ["Primary", "Disc"],
+            Audio: ["Primary"],
+            Person: ["Primary", "Backdrop"],
+            BoxSet: ["Primary", "Logo", "Backdrop", "Banner", "Thumb"],
+          };
+
+          var DEFAULT_IMAGE_TYPES = ["Primary", "Backdrop"];
+
+          function getSupportedTypes(itemType) {
+            return SUPPORTED_IMAGE_TYPES[itemType] || DEFAULT_IMAGE_TYPES;
+          }
+
+          // Singular = everything supported except Backdrop
+          function getSingularTypes(itemType) {
+            return getSupportedTypes(itemType).filter(function (t) {
+              return t !== "Backdrop";
+            });
+          }
+
+          function supportsBackdrop(itemType) {
+            return getSupportedTypes(itemType).indexOf("Backdrop") !== -1;
+          }
+
+          function openEditModal(itemId, itemName, itemType) {
             modalItemId = itemId;
             modalItemName = itemName;
+            modalItemType = itemType || null;
             modalImages = {};
 
             document.getElementById("modalTitle").textContent = itemName;
@@ -1185,46 +1216,54 @@
             var body = document.getElementById("modalBody");
             body.innerHTML = "";
 
-            // Singular images
-            var singSection = document.createElement("div");
-            singSection.innerHTML =
-              '<h2 class="sectionTitle" style="margin:0 0 0.8em;">Images</h2>';
+            var singularTypes = getSingularTypes(modalItemType);
 
-            var singGrid = document.createElement("div");
-            singGrid.className = "aj-img-grid";
+            // ── Singular images ────────────────────────────────────────────────
+            if (singularTypes.length > 0) {
+              var singSection = document.createElement("div");
+              singSection.innerHTML =
+                '<h2 class="sectionTitle" style="margin:0 0 0.8em;">Images</h2>';
 
-            SINGULAR_TYPES.forEach(function (type) {
-              var landscape = isLandscape(type);
-              var imgs = modalImages[type] || [];
+              var singGrid = document.createElement("div");
+              singGrid.className = "aj-img-grid";
 
-              if (imgs.length > 0) {
-                imgs.forEach(function (imgInfo) {
-                  singGrid.appendChild(makeImageCard(imgInfo, type, landscape));
-                });
-              } else {
-                singGrid.appendChild(makeAddCard(type, landscape));
-              }
-            });
+              singularTypes.forEach(function (type) {
+                var landscape = isLandscape(type);
+                var imgs = modalImages[type] || [];
 
-            singSection.appendChild(singGrid);
-            body.appendChild(singSection);
+                if (imgs.length > 0) {
+                  imgs.forEach(function (imgInfo) {
+                    singGrid.appendChild(
+                      makeImageCard(imgInfo, type, landscape),
+                    );
+                  });
+                } else {
+                  singGrid.appendChild(makeAddCard(type, landscape));
+                }
+              });
 
-            // Backdrops
-            var bdSection = document.createElement("div");
-            bdSection.innerHTML =
-              '<h2 class="sectionTitle" style="margin:0.5em 0 0.8em;">Backdrops</h2>';
+              singSection.appendChild(singGrid);
+              body.appendChild(singSection);
+            }
 
-            var bdGrid = document.createElement("div");
-            bdGrid.className = "aj-img-grid";
+            // ── Backdrops (only if this item type supports them) ───────────────
+            if (supportsBackdrop(modalItemType)) {
+              var bdSection = document.createElement("div");
+              bdSection.innerHTML =
+                '<h2 class="sectionTitle" style="margin:0.5em 0 0.8em;">Backdrops</h2>';
 
-            var backdrops = modalImages["Backdrop"] || [];
-            backdrops.forEach(function (imgInfo) {
-              bdGrid.appendChild(makeImageCard(imgInfo, "Backdrop", true));
-            });
-            bdGrid.appendChild(makeAddCard("Backdrop", true));
+              var bdGrid = document.createElement("div");
+              bdGrid.className = "aj-img-grid";
 
-            bdSection.appendChild(bdGrid);
-            body.appendChild(bdSection);
+              var backdrops = modalImages["Backdrop"] || [];
+              backdrops.forEach(function (imgInfo) {
+                bdGrid.appendChild(makeImageCard(imgInfo, "Backdrop", true));
+              });
+              bdGrid.appendChild(makeAddCard("Backdrop", true));
+
+              bdSection.appendChild(bdGrid);
+              body.appendChild(bdSection);
+            }
           }
 
           function makeImageCard(imgInfo, type, landscape) {
@@ -1240,10 +1279,7 @@
 
             var imgUrl = ApiClient.getUrl(
               "Items/" + modalItemId + "/Images/" + imgPath,
-              {
-                maxWidth: landscape ? 280 : 160,
-                quality: 90,
-              },
+              { maxWidth: landscape ? 280 : 160, quality: 90 },
             );
 
             var img = document.createElement("img");
