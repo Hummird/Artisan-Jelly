@@ -801,6 +801,13 @@
             visible.forEach(function (type) {
               c.appendChild(makeCheckbox(type, "chkMissing", false));
             });
+
+            // Hide the "Backdrops fewer than" input field if hidden
+            var bdInput = document.getElementById("numBackdrops");
+            if (bdInput && bdInput.parentElement) {
+              var isHidden = getHidden().indexOf("Backdrop") !== -1;
+              bdInput.parentElement.style.display = isHidden ? "none" : "";
+            }
           }
 
           function buildCriteria() {
