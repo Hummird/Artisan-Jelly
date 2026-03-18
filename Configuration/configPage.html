@@ -572,18 +572,7 @@
               </div>
               <div class="selectContainer">
                 <label class="selectLabel" for="selectItemType">Type</label>
-                <select is="emby-select" id="selectItemType">
-                  <option value="All">All</option>
-                  <option value="Movie">Movie</option>
-                  <option value="Series">Series</option>
-                  <option value="Season">Season</option>
-                  <option value="Episode">Episode</option>
-                  <option value="Person">Person</option>
-                  <option value="MusicAlbum">Music Album</option>
-                  <option value="Audio">Audio</option>
-                  <option value="MusicArtist">Music Artist</option>
-                  <option value="BoxSet">Box Set</option>
-                </select>
+                <select is="emby-select" id="selectItemType"></select>
               </div>
               <div>
                 <span class="aj-bd-label">Backdrops fewer than</span>
@@ -916,10 +905,32 @@
                   }
 
                   setHiddenItems(cur);
+                  buildTypeDropdown();
                 });
 
               c.appendChild(lbl);
             });
+          }
+
+          function buildTypeDropdown() {
+            var hidden = getHiddenItems();
+            var sel = document.getElementById("selectItemType");
+            if (!sel) return;
+
+            // Remember current selection, fall back to All if it just got hidden
+            var current = sel.value;
+            if (hidden.indexOf(current) !== -1) current = "All";
+
+            sel.innerHTML = '<option value="All">All</option>';
+            ALL_ITEM_TYPES.forEach(function (type) {
+              if (hidden.indexOf(type) !== -1) return; // skip hidden
+              var opt = document.createElement("option");
+              opt.value = type;
+              opt.textContent = type;
+              sel.appendChild(opt);
+            });
+
+            sel.value = current;
           }
 
           function buildMissingGroup() {
@@ -1688,6 +1699,7 @@
             buildIgnoredImageTypesGroup();
             buildIgnoredItemTypesGroup();
             buildMissingGroup();
+            buildTypeDropdown();
 
             ApiClient.ajax({
               type: "GET",
