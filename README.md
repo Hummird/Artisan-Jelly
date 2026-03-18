@@ -37,9 +37,6 @@ You can tailor the results view and filters by hiding specific image types.
 **Hidden Items (⚙):** Any image or item type you mark as hidden is entirely excluded from both the filtering options and the final results grid.  
 This allows you to ignore obscure image types (e.g., BoxRear or Disc) or item type (e.g., Episode or BoxSet) you don't care about and keep your workflow clean.
 
-> [!NOTE]
-> Hidden item types will still be available for picking in the Type filter, but will be hidden from the results when you set Type to "All".
-
 ### Search Results
 
 The results list provides a visual overview of all items matching your filter criteria.
