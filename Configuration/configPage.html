@@ -700,7 +700,42 @@
                   style="display: none"
                 />
               </label>
-              <div id="uploadHint"></div>
+              <label
+                is="emby-button"
+                class="raised emby-button"
+                id="btnWebSearch"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.4em;
+                  cursor: pointer;
+                  margin-bottom: 0.4em;
+                "
+              >
+                Web search
+              </label>
+              <div id="uploadHint" style="width: 100%"></div>
+            </div>
+            <div
+              style="
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                padding-top: 1em;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: 0.5em;
+                "
+              >
+                <span style="font-size: 0.9em; opacity: 0.7">
+                  Openverse search results
+                </span>
+                <div id="webSearchStatus"></div>
+              </div>
+              <div id="webSearchGrid"></div>
             </div>
             <div
               style="
