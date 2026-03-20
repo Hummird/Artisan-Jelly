@@ -1400,9 +1400,7 @@
               "Search: " + type;
             document.getElementById("ajSearchGrid").innerHTML = "";
             document.getElementById("searchStatus").textContent = "Searching…";
-            document.getElementById("uploadHint").textContent = includeUpload
-              ? "Upload a local image for this type."
-              : "";
+            document.getElementById("uploadHint").textContent = "";
 
             var landscape = isLandscape(type) || type === "Backdrop";
             document.getElementById("ajSearchGrid").className =
