@@ -1581,7 +1581,7 @@
           }
 
           function applyRemoteImage(url, type) {
-            document.getElementById("searchStatus").textContent = "Applying…";
+            document.getElementById("uploadHint").textContent = "Applying…";
 
             ApiClient.ajax({
               type: "POST",
@@ -1594,7 +1594,7 @@
               ),
             })
               .then(function () {
-                document.getElementById("searchStatus").innerHTML =
+                document.getElementById("uploadHint").innerHTML =
                   '<span class="material-icons check" style="vertical-align: middle;"></span> Applied!';
                 setTimeout(function () {
                   closeSearchModal();
