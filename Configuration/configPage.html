@@ -1437,12 +1437,89 @@
             document.getElementById("searchStatus").textContent = "Searching…";
             document.getElementById("uploadHint").textContent = "";
 
+            // Clear web search section
+            document.getElementById("webSearchGrid").innerHTML = "";
+            document.getElementById("webSearchStatus").textContent =
+              'Click "Search the Web" to search Openverse.';
+
             var landscape = isLandscape(type) || type === "Backdrop";
             document.getElementById("ajSearchGrid").className =
               "aj-search-grid" + (landscape ? " landscape" : "");
 
             document.getElementById("ajSearchOverlay").classList.add("open");
             doImageSearch(type, landscape);
+
+            var webBtn = document.getElementById("btnWebSearch");
+            if (webBtn) {
+              webBtn.onclick = function () {
+                doWebSearch(type, landscape);
+              };
+            }
+          }
+
+          function doWebSearch(type, landscape) {
+            var statusEl = document.getElementById("webSearchStatus");
+            var gridEl = document.getElementById("webSearchGrid");
+
+            statusEl.textContent = "Searching Openverse…";
+            gridEl.innerHTML = "";
+            gridEl.className =
+              "aj-search-grid" + (landscape ? " landscape" : "");
+
+            fetch(
+              "https://api.openverse.org/v1/images/?" +
+                new URLSearchParams({
+                  q: modalItemName,
+                  page_size: 20,
+                  aspect_ratio: landscape ? "wide" : "tall",
+                }),
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(function (data) {
+                var results = (data && data.results) || [];
+                statusEl.textContent = results.length
+                  ? ""
+                  : "No results found.";
+
+                results.forEach(function (img) {
+                  var cell = document.createElement("div");
+                  cell.className =
+                    "aj-search-item " + (landscape ? "landscape" : "portrait");
+
+                  var el = document.createElement("img");
+                  el.src = img.thumbnail || img.url;
+                  el.alt = "";
+                  el.loading = "lazy";
+                  el.onerror = function () {
+                    if (el.src !== img.url) {
+                      el.src = img.url; // thumbnail failed -> try full-res
+                    } else {
+                      cell.style.display = "none"; // both failed -> hide
+                    }
+                  };
+
+                  var info = document.createElement("div");
+                  info.className = "aj-si-info";
+                  info.textContent =
+                    (img.width || "?") +
+                    "×" +
+                    (img.height || "?") +
+                    (img.license ? " · " + img.license.toUpperCase() : "");
+
+                  cell.appendChild(el);
+                  cell.appendChild(info);
+                  cell.addEventListener("click", function () {
+                    applyRemoteImage(img.url, type);
+                  });
+
+                  gridEl.appendChild(cell);
+                });
+              })
+              .catch(function () {
+                statusEl.textContent = "Openverse search failed.";
+              });
           }
 
           function doImageSearch(type, landscape) {
