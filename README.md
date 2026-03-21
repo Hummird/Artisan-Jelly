@@ -56,7 +56,8 @@ The interface lets you fix missing images directly without leaving the plugin pa
 - **Edit Images Panel:** Once you locate an item missing an image, you can click to open the editing tools.
 - **Search:** You can search for new images online through your already connected metadata providers (like TMDB, TVDB, etc.) and through Openverse, which sources from multiple providers including Wikimedia Commons and Flickr.
   > [!NOTE]
-  > Results from Openverse may not always be perfectly accurate or relevant, so it's recommended to review the search results carefully before applying any images to your media items.  
+  > Results from Openverse may not always be perfectly accurate or relevant
+  > It's recommended to review the search results carefully before applying any images to your media items.  
   > Artisan Jelly prioritizes your existing metadata providers for image searching, but Openverse can be a helpful fallback option when those providers don't have the images you need.
 - **Upload:** You can upload a local file directly from your computer to instantly update the media item.
 - **Refresh:** A refresh button (↻) allows you to manually reload the data if for some reason is wasn't reloaded automatically
